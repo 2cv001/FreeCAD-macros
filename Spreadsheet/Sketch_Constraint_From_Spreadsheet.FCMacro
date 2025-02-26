@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/02/26 07:39"  # YYYY/MM/DD 
+__Date__ = "2025/02/26 15:00"  # YYYY/MM/DD 
 __Version__ = __Date__
 __Icon__ = (
     "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
@@ -107,7 +107,7 @@ messages = {
         "TITLE": "TITRE",
         "Textsforalias": "Libellé des alias",
         "Values": "Valeurs",
-        "OkOui": "Oui",
+        "OkOui": "&Oui",
         "NoPasDe": "Pas de",
         "foundTrouve": "trouvé",
         "foundCreateOne": "trouvé, en créer un ?",
@@ -137,9 +137,9 @@ messages = {
         "ConstarintConflicDetected": "Détection de conflit dans les contraintes. Annulation de la création de la conrainte ?",
         "getConstraintTypeAliasToolTip": "Si coché, l'alias sera automatiquement créé lors de l'éxécution de la macro."
         + "\nLes Alias seront créés à droite des cellules avec texte. Les cellules avec texte sont celle ci et en dessous : ",
-        "getConstraintTypeOption1ButtonSetText": "Contrainte horizontale ",
-        "getConstraintTypeOption2ButtonSetText": "Contrainte verticale",
-        "getConstraintTypeOption3ButtonSetText": "Contrainte alignée",
+        "getConstraintTypeOption1ButtonSetText": "Contrainte &horizontale ",
+        "getConstraintTypeOption2ButtonSetText": "Contrainte &verticale",
+        "getConstraintTypeOption3ButtonSetText": "Contrainte &alignée",
         "getConstraintTypeOption1ButtonSetTextToolTip": "Contrainte horizontale",
         "getConstraintTypeOption2ButtonSetTextToolTip": "Contrainte verticale",
         "getConstraintTypeOption3ButtonSetTextToolTip": "Contrainte alignée",
@@ -165,11 +165,11 @@ messages = {
         "TITLE": "TITLE",
         "Textsforalias": "Texts for alias",
         "Values": "Values",
-        "OkOui": "OK",
+        "OkOui": "&OK",
         "NoPasDe": "No",
         "foundTrouve": "found",
         "foundCreateOne": "found, create one?",
-        "Cancel": "Cancel",
+        "Cancel": "&Cancel",
         "Warning": "Warning",
         "XYPlane": "XY Plane",
         "XZPlane": "XZ Plane",
@@ -193,9 +193,9 @@ messages = {
         "ConstarintConflicDetected": "Constraints conflic detected. Cancel constraint creation?",
         "getConstraintTypeAliasToolTip": "If checked, alias will automatically be created during each macro execution."
         + "\nAlias will be built for the right cells from the text in this cell and under.",
-        "getConstraintTypeOption1ButtonSetText": "Constrain Horzontal Dist",
-        "getConstraintTypeOption2ButtonSetText": "Constrain Vertical Dist",
-        "getConstraintTypeOption3ButtonSetText": "Constrain Distance",
+        "getConstraintTypeOption1ButtonSetText": "Constrain &Horzontal Dist",
+        "getConstraintTypeOption2ButtonSetText": "Constrain &Vertical Dist",
+        "getConstraintTypeOption3ButtonSetText": "Constrain &Distance",
         "getConstraintTypeOption1ButtonSetTextToolTip": "Constrain Horzontal Distance",
         "getConstraintTypeOption2ButtonSetTextToolTip": "Constrain Vertical Distance",
         "getConstraintTypeOption3ButtonSetTextToolTip": "Constrain Distance",
@@ -475,11 +475,10 @@ class Dialog(QtGui.QDialog):
         )
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
-        # The English OK button should have Alt+O keyboard shortcut
-        if language != "English":
-            self.buttons.button(QtGui.QDialogButtonBox.Ok).setText(
-                messages[language]["OkOui"]
-            )
+
+        self.buttons.button(QtGui.QDialogButtonBox.Ok).setText(
+            messages[language]["OkOui"]
+        )
 
         layout.addWidget(self.buttons)
 
