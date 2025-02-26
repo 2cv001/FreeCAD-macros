@@ -17,14 +17,14 @@
 # ==    like 'Spreadsheet.alias'.                                       ==
 # ==    if not, just something like 'Spreadsheet.C2'                    ==
 # == You can select lines, points line, points, circle...               ==
-# == You can select external objetcs                                    ==
+# == You can select external objects                                    ==
 # ========================================================================
 # ========================================================================
 __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/02/26 15:00"  # YYYY/MM/DD 
+__Date__ = "2025/02/26 17:30"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = (
     "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
@@ -111,7 +111,7 @@ messages = {
         "NoPasDe": "Pas de",
         "foundTrouve": "trouvé",
         "foundCreateOne": "trouvé, en créer un ?",
-        "Cancel": "Abandon",
+        "Cancel": "&Abandon",
         "Warning": "Attention",
         "XYPlane": "Plan XY",
         "XZPlane": "Plan XZ",
@@ -478,6 +478,9 @@ class Dialog(QtGui.QDialog):
 
         self.buttons.button(QtGui.QDialogButtonBox.Ok).setText(
             messages[language]["OkOui"]
+        )
+        self.buttons.button(QtGui.QDialogButtonBox.Cancel).setText(
+            messages[language]["Cancel"]
         )
 
         layout.addWidget(self.buttons)
