@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/02 08:00"  # YYYY/MM/DD
+__Date__ = "2025/02/28 10:00"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = (
     "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
@@ -72,11 +72,9 @@ def getLanguage():
         "en": "English",
         "fr": "French",
     }
-
     lang = App.ParamGet("User parameter:BaseApp/Preferences/General").GetString(
         "Language"
     )
-
     if not lang:  # if App.ParamGet found nothing
         system_language = locale.getlocale()[0][:2]
         if system_language in common_languages:
@@ -274,10 +272,11 @@ def isSketchActif():
 # ------------------------------------------------
 def selectedPropertiesInTreeView():
     dicoName = {
-
-        
         "InternalGeometry.MakeInternals": "",
         "Sketch.Constraints": "",
+        "Placement.Position.x": "Placement.Base.x",
+        "Placement.Position.y": "Placement.Base.y",
+        "Placement.Position.z": "Placement.Base.z",
         "AttachmentOffset.Position.x": ".AttachmentOffset.Base.x",
         "AttachmentOffset.Position.y": ".AttachmentOffset.Base.y",
         "AttachmentOffset.Position.z": ".AttachmentOffset.Base.z",
@@ -285,28 +284,20 @@ def selectedPropertiesInTreeView():
         "AttachmentOffset.Axis.y": ".AttachmentOffset.Rotation.Axis.y",
         "AttachmentOffset.Axis.z": ".AttachmentOffset.Rotation.Axis.z",
         "AttachmentOffset.Angle": ".AttachmentOffset.Rotation.Angle",
+        "Placement.Axis.x": "Placement.Rotation.Axis.x",
+        "Placement.Axis.y": "Placement.Rotation.Axis.y",
+        "Placement.Axis.z": "Placement.Rotation.Axis.z",
         "attachementAxisX": "AttachmentOffset.Rotation.Axis.x",
         "attachementAxisY": "AttachmentOffset.Rotation.Axis.y",
         "attachementAxisZ": "AttachmentOffset.Rotation.Axis.z",
-        '''
-        "Length": "Length",
-        "Length2": "Length2",
-        "Radius": "Radius",
-        "Height": "Height",
-        "FirstAngle": "FirstAngle",
-        "SecondAngle": "SecondAngle",
-        "Angle1": "Angle1",
-        "Angle2": "Angle2",
-        "Angle3": "Angle3",
-        '''
-        "Sketch.ArcFitTolerance": "ArcFitTolerance",
 
+        "Sketch.ArcFitTolerance": "ArcFitTolerance",
         "Direction.x": "",
         "Direction.y": "",
         "Direction.z": "",
         "Offset": "",
     }
-    parentToRemove=['Attachment','Pad', 'Base']
+    parentToRemove = ["Attachment", "Pad", "Base"]
 
     def has_parent(index):
         return index.parent().isValid()
@@ -328,13 +319,13 @@ def selectedPropertiesInTreeView():
         return value, expression
 
     propertiesName = ""
-    propertiesNameCompleteStr=''
+    propertiesNameCompleteStr = ""
     propertiesParentObject = ""
     propertiesParents = []
     propertiesTip = ""
     propertiesValue = ""
     propertiesExpression = ""
-    propertiesName=''
+    propertiesName = ""
 
     trees = Gui.getMainWindow().findChildren(QtGui.QTreeView)
     t = 0
@@ -377,38 +368,34 @@ def selectedPropertiesInTreeView():
                                     0
                                 ]  # the first element is the propertyName, not a parent
 
-                                # propertyParents = tabProperty
                                 propertiesParents = tabProperty
 
                 if t == 2 and n == 2:  # tip
                     tip = index.data(QtCore.Qt.ToolTipRole)
                     propertiesTip = tip
-    propertiesName = propertiesName.replace(" ", "")
 
+    propertiesName = propertiesName.replace(" ", "")
     propertiesParents_inverse = propertiesParents[::-1]
 
-    print('404 propertiesParents_inverse',propertiesParents_inverse)
-    if len(propertiesParents_inverse)>0:
+    if len(propertiesParents_inverse) > 0:
         if propertiesParents_inverse[0] in parentToRemove:
-            del propertiesParents_inverse[0] # remove the top parents if he belong to parentToRemove
-    print('408 propertiesParents_inverse',propertiesParents_inverse)
+            del propertiesParents_inverse[
+                0
+            ]  # remove the top parents if he belong to parentToRemove
     propertiesNameCompleteStr = (
         ".".join(propertiesParents_inverse) + "." + propertiesName
     )
-
-    if propertiesNameCompleteStr.startswith('.'):
+    if propertiesNameCompleteStr.startswith("."):
         propertiesNameCompleteStr = propertiesNameCompleteStr[1:]
-    propertiesNameCompleteStr = propertiesNameCompleteStr.replace(" ", "")
 
+    propertiesNameCompleteStr = propertiesNameCompleteStr.replace(" ", "")
     propertiesNameCompleteStrDico = dicoName.get(propertiesNameCompleteStr, "none")
 
     if propertiesNameCompleteStrDico == "none":
         propertiesNameCompleteStrDico = propertiesNameCompleteStr
-    #if "Sketch.Constraints.Constraint" in propertiesNameCompleteStrDico:
-    #    propertiesNameCompleteStrDico = ""  # Constraint
-
-
-
+        print('pas trouvé dans le dico', propertiesNameCompleteStr)
+    print('propertiesNameCompleteStr',propertiesNameCompleteStr)
+    print('propertiesNameCompleteStrDico',propertiesNameCompleteStrDico)
     return (
         propertiesName,
         propertiesParentObject,
@@ -832,7 +819,6 @@ def get_user_input(
 #  necessary or desired objects.
 # =========================================================
 def addTheObjects():
-
     def firstObject(type, doc=App.ActiveDocument):
         if doc == None:
             return None
@@ -1798,7 +1784,7 @@ def main():
         sels = Gui.Selection.getSelectionEx()
         # print('sels[0].Object.TypeId',sels[0].Object.TypeId)
         if not isSketchActif():
-            myPadOrPocket = sels[0].Object # object owner of property
+            myPadOrPocket = sels[0].Object  # object owner of property
             typeIdGeometry1 = sels[0].Object.TypeId
     except:
         pass
@@ -2029,18 +2015,12 @@ def main():
         propertiesParentObject, propertiesNameCompleteStrDico = (
             propertiesParentObjectAndPropertiesNameInTreeView()
         )
-
-
-        print('myPadOrPocket.Label',myPadOrPocket.Label)
-        print('propertiesNameCompleteStrDico',propertiesNameCompleteStrDico)
-        print('celleExpression',cellExpression)
-
         if propertiesNameCompleteStrDico == "":
             return
         try:
             myPadOrPocket.setExpression(propertiesNameCompleteStrDico, cellExpression)
         except:
-            print('No property selected, or property not editable')
+            print("No property selected, or property not editable")
             return
         return
 
