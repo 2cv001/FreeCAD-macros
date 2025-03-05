@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/05 08:58"  # YYYY/MM/DD
+__Date__ = "2025/03/05 19:40"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ ="https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -279,10 +279,14 @@ def selectedPropertiesInTreeView():
         "UpToShape":"",
         "AttachmentOffset":"",
         "Placement": "",
+        "Group":"",
         "Pocket.ReferenceAxis":"",
         "Placement.Position.x": "Placement.Base.x",
         "Placement.Position.y": "Placement.Base.y",
         "Placement.Position.z": "Placement.Base.z",
+        "Placement.Axederotation.x":"Placement.Rotation.Axis.x",
+        "Placement.Axederotation.y": "Placement.Rotation.Axis.y",
+        "Placement.Axederotation.z": "Placement.Rotation.Axis.z",
         "AttachmentOffset.Position.x": ".AttachmentOffset.Base.x",
         "AttachmentOffset.Position.y": ".AttachmentOffset.Base.y",
         "AttachmentOffset.Position.z": ".AttachmentOffset.Base.z",
@@ -300,7 +304,7 @@ def selectedPropertiesInTreeView():
 
         "Sketch.ArcFitTolerance": "ArcFitTolerance",
     }
-    parentToRemove = ["Attachment", "Pad", "Base", "Sketch Based","Part Design", "Draft"]
+    parentToRemove = ["Attachment", "Pad", "Base", "Sketch Based","Part Design", "Draft","Experimental"]
 
     def has_parent(index):
         return index.parent().isValid()
@@ -2029,6 +2033,7 @@ def main():
             propertiesParentObjectAndPropertiesNameInTreeView()
         )
         if propertiesNameCompleteStrDico == "":
+            print('Selection not allowed')
             return
         try:
             myPadOrPocket.setExpression(propertiesNameCompleteStrDico, cellExpression)
