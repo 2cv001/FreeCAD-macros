@@ -26,7 +26,9 @@ __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
 __Date__ = "2025/02/28 08:00"  # YYYY/MM/DD
 __Version__ = __Date__
-__Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
+__Icon__ = (
+    "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
+)
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
 __License__ = "Apache-2.0"
 
@@ -70,11 +72,9 @@ def getLanguage():
         "en": "English",
         "fr": "French",
     }
-
     lang = App.ParamGet("User parameter:BaseApp/Preferences/General").GetString(
         "Language"
     )
-
     if not lang:  # if App.ParamGet found nothing
         system_language = locale.getlocale()[0][:2]
         if system_language in common_languages:
@@ -256,6 +256,175 @@ def save_settings_Alias(cell, checked, config, ini_file):
     config.set("SettingsAlias", "checkboxAlias", str(checked))
     with open(ini_file, "w") as configfile:
         config.write(configfile)
+
+
+def isSketchActif():
+    try:
+        s = ActiveSketch
+        return True
+    except:
+        return False
+
+
+# ------------------------------------------------
+# get selected properties in treeView
+# select only one object and one or more property
+# ------------------------------------------------
+def selectedPropertiesInTreeView():
+    # "" = do not change the property
+    dicoName = {
+        "InternalGeometry.MakeInternals": "",
+        "Sketch.Constraints": "",
+        "Profile":"",
+        "MapMode":"",
+        "AttachmentSupport":"",
+        "UpToShape":"",
+        "Pocket.ReferenceAxis":"",
+        "Placement.Position.x": "Placement.Base.x",
+        "Placement.Position.y": "Placement.Base.y",
+        "Placement.Position.z": "Placement.Base.z",
+        "AttachmentOffset.Position.x": ".AttachmentOffset.Base.x",
+        "AttachmentOffset.Position.y": ".AttachmentOffset.Base.y",
+        "AttachmentOffset.Position.z": ".AttachmentOffset.Base.z",
+        "AttachmentOffset.Axis.x": ".AttachmentOffset.Rotation.Axis.x",
+        "AttachmentOffset.Axis.y": ".AttachmentOffset.Rotation.Axis.y",
+        "AttachmentOffset.Axis.z": ".AttachmentOffset.Rotation.Axis.z",
+        "AttachmentOffset.Angle": ".AttachmentOffset.Rotation.Angle",
+        "Placement.Axis.x": "Placement.Rotation.Axis.x",
+        "Placement.Axis.y": "Placement.Rotation.Axis.y",
+        "Placement.Axis.z": "Placement.Rotation.Axis.z",
+        "attachementAxisX": "AttachmentOffset.Rotation.Axis.x",
+        "attachementAxisY": "AttachmentOffset.Rotation.Axis.y",
+        "attachementAxisZ": "AttachmentOffset.Rotation.Axis.z",
+
+        "Sketch.ArcFitTolerance": "ArcFitTolerance",
+    }
+    parentToRemove = ["Attachment", "Pad", "Base", "Sketch Based","Part Design", "Draft"]
+
+    def has_parent(index):
+        return index.parent().isValid()
+
+    def extract_value_expression(string):
+        if (
+            not type(string) == str
+            or string.count("(") == 0
+            or string.count(")") == 0
+            or string.count("[") > 0
+        ):
+            return string, ""
+        string = str(string)
+        parts = string.split("(")
+        expression = parts[-1]
+        value = string.rpartition("(")[0].strip()
+        s = string.rpartition("(")[2]
+        expression = s.replace(")", "").strip()
+        return value, expression
+
+    propertiesName = ""
+    propertiesNameCompleteStr = ""
+    propertiesParentObject = ""
+    propertiesParents = []
+    propertiesTip = ""
+    propertiesValue = ""
+    propertiesExpression = ""
+    propertiesName = ""
+
+    trees = Gui.getMainWindow().findChildren(QtGui.QTreeView)
+    t = 0
+    for tree in trees:
+        t = t + 1
+        n = 0
+        tabProperty = []
+        for index in tree.selectedIndexes():
+            n = n + 1
+
+            if (
+                isinstance(index, QtCore.QModelIndex)
+                and index.isValid()
+                and index.model() is not None
+            ):
+
+                data = index.data(QtCore.Qt.DisplayRole)  # data is an str or boolean
+
+                if t == 2 and n == 1:
+                    propertiesName = data
+                elif t == 2 and n == 2:
+                    value, expression = extract_value_expression(data)
+                    propertiesValue = value
+                    propertiesExpression = expression
+                elif t == 3 and n == 1:
+                    propertiesParentObject = data
+
+                if t == 2 and n == 1:
+                    itemData = index.model().itemData(index)
+                    if itemData != {}:
+                        if 0 in itemData:
+                            if n == 1:
+                                tabProperty = [itemData[0]]
+                                parent = index.parent()
+                                tabProperty.append(parent.data())
+                                while has_parent(parent):
+                                    parent = parent.parent()
+                                    tabProperty.append(parent.data())
+                                del tabProperty[
+                                    0
+                                ]  # the first element is the propertyName, not a parent
+
+                                propertiesParents = tabProperty
+
+                if t == 2 and n == 2:  # tip
+                    tip = index.data(QtCore.Qt.ToolTipRole)
+                    propertiesTip = tip
+
+    propertiesName = propertiesName.replace(" ", "")
+    propertiesParents_inverse = propertiesParents[::-1]
+
+    if len(propertiesParents_inverse) > 0:
+        if propertiesParents_inverse[0] in parentToRemove:
+            print('remove parent',propertiesParents_inverse[0])
+            del propertiesParents_inverse[
+                0
+            ]  # remove the top parents if he belong to parentToRemove
+    propertiesNameCompleteStr = (
+        ".".join(propertiesParents_inverse) + "." + propertiesName
+    )
+    if propertiesNameCompleteStr.startswith("."):
+        propertiesNameCompleteStr = propertiesNameCompleteStr[1:]
+
+    propertiesNameCompleteStr = propertiesNameCompleteStr.replace(" ", "")
+    propertiesNameCompleteStrDico = dicoName.get(propertiesNameCompleteStr, "none")
+
+    if propertiesNameCompleteStrDico == "none":
+        propertiesNameCompleteStrDico = propertiesNameCompleteStr
+        # print('pas trouvé dans le dico', propertiesNameCompleteStr)
+    print('propertiesNameCompleteStr',propertiesNameCompleteStr)
+    print('propertiesNameCompleteStrDico',propertiesNameCompleteStrDico)
+    return (
+        propertiesName,
+        propertiesParentObject,
+        propertiesNameCompleteStrDico,
+        propertiesParents,
+        propertiesTip,
+        propertiesValue,
+        propertiesExpression,
+    )
+
+
+# ------------------------------------------------
+# get propertiesParentObject (pad, sketch...) and propertiesName
+# from selectedPropertiesInTreeView
+# ------------------------------------------------
+def propertiesParentObjectAndPropertiesNameInTreeView():
+    (
+        propertiesName,
+        propertiesParentObject,
+        propertiesNameCompleteStrDico,
+        propertiesParents,
+        propertiesTip,
+        propertiesValue,
+        propertiesExpression,
+    ) = selectedPropertiesInTreeView()
+    return (propertiesParentObject, propertiesNameCompleteStrDico)
 
 
 #################################################################################
@@ -653,7 +822,6 @@ def get_user_input(
 #  necessary or desired objects.
 # =========================================================
 def addTheObjects():
-
     def firstObject(type, doc=App.ActiveDocument):
         if doc == None:
             return None
@@ -1578,18 +1746,9 @@ def main():
 
     if not (len(sels) != 0 and len(sels[0].SubElementNames) != 0):
 
-        if not (
-            len(sels) != 0
-            and sels[0].Object.TypeId
-            in [
-                "PartDesign::Pad",
-                "PartDesign::Pocket",
-                "Part::Part2DObjectPython",
-                "PartDesign::Thickness",
-                "PartDesign::Chamfer",
-                "PartDesign::Fillet",
-            ]
-        ):
+        # if not (len(sels) != 0 and not isSketchActif()):
+        if len(sels) == 0 or isSketchActif():
+
             message = messages[language]["NoObjectSelected"]
             if (
                 QtGui.QMessageBox.warning(
@@ -1620,21 +1779,15 @@ def main():
 
         return True
 
-    ####If we select a Pad, Pocket... not in edition mode and a cell
+    # If we select a Pad, Pocket... not in edition mode and a cell
+    # --------------------------------------------------------------
     myPadOrPocket = None
 
     try:
         sels = Gui.Selection.getSelectionEx()
         # print('sels[0].Object.TypeId',sels[0].Object.TypeId)
-        if sels[0].Object.TypeId in [
-            "PartDesign::Pad",
-            "PartDesign::Pocket",
-            "Part::Part2DObjectPython",
-            "PartDesign::Thickness",  # ShapeString, Thickness
-            "PartDesign::Chamfer",
-            "PartDesign::Fillet",
-        ]:
-            myPadOrPocket = sels[0].Object
+        if not isSketchActif():
+            myPadOrPocket = sels[0].Object  # object owner of property
             typeIdGeometry1 = sels[0].Object.TypeId
     except:
         pass
@@ -1679,14 +1832,16 @@ def main():
 
     try:
         if sels[0].Object.TypeId not in ["Part::Part2DObjectPython"]:  # ShapeString
+            cellContents = mySpreadsheet.get(cellCode)
             cellContents = float(mySpreadsheet.get(cellCode))
     except:
-        QtGui.QMessageBox.information(
-            None,
-            messages[language]["Warning"],
-            messages[language]["ClickOnACellBefore"],
-        )
-        return
+        if isSketchActif():
+            QtGui.QMessageBox.information(
+                None,
+                messages[language]["Warning"],
+                messages[language]["ClickOnACellBefore"],
+            )
+            return
 
     column = get_column(cellCode)
 
@@ -1860,17 +2015,16 @@ def main():
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
 
     if myPadOrPocket != None:
-        # myPadOrPocket.setExpression('Length', u'SpreadSheetDatas12.B5')
-        if myPadOrPocket.TypeId == "Part::Part2DObjectPython":
-            myPadOrPocket.setExpression("String", str(cellExpression))
-        elif myPadOrPocket.TypeId == "PartDesign::Thickness":
-            myPadOrPocket.setExpression("Value", cellExpression)
-        elif myPadOrPocket.TypeId == "PartDesign::Chamfer":
-            myPadOrPocket.setExpression("Size", cellExpression)
-        elif myPadOrPocket.TypeId == "PartDesign::Fillet":
-            myPadOrPocket.setExpression("Radius", cellExpression)
-        else:
-            myPadOrPocket.setExpression("Length", cellExpression)
+        propertiesParentObject, propertiesNameCompleteStrDico = (
+            propertiesParentObjectAndPropertiesNameInTreeView()
+        )
+        if propertiesNameCompleteStrDico == "":
+            return
+        try:
+            myPadOrPocket.setExpression(propertiesNameCompleteStrDico, cellExpression)
+        except:
+            print("No property selected, or property not editable")
+            return
         return
 
     # create constraint for internal or external circle
