@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/05 07:30"  # YYYY/MM/DD
+__Date__ = "2025/03/05 08:00"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ ="https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -277,6 +277,8 @@ def selectedPropertiesInTreeView():
         "MapMode":"",
         "AttachmentSupport":"",
         "UpToShape":"",
+        "AttachmentOffset":"",
+        "Placement": "",
         "Pocket.ReferenceAxis":"",
         "Placement.Position.x": "Placement.Base.x",
         "Placement.Position.y": "Placement.Base.y",
@@ -291,6 +293,7 @@ def selectedPropertiesInTreeView():
         "Placement.Axis.x": "Placement.Rotation.Axis.x",
         "Placement.Axis.y": "Placement.Rotation.Axis.y",
         "Placement.Axis.z": "Placement.Rotation.Axis.z",
+        "Placement.Angle" : "Placement.Rotation.Angle",
         "attachementAxisX": "AttachmentOffset.Rotation.Axis.x",
         "attachementAxisY": "AttachmentOffset.Rotation.Axis.y",
         "attachementAxisZ": "AttachmentOffset.Rotation.Axis.z",
@@ -379,7 +382,6 @@ def selectedPropertiesInTreeView():
 
     if len(propertiesParents_inverse) > 0:
         if propertiesParents_inverse[0] in parentToRemove:
-            print('remove parent',propertiesParents_inverse[0])
             del propertiesParents_inverse[
                 0
             ]  # remove the top parents if he belong to parentToRemove
@@ -1856,6 +1858,16 @@ def main():
         )
         activateSketchEditingWindow()
         return
+
+    if len(sels)==0 :
+        QtGui.QMessageBox.information(
+            None,
+            messages[language]["Warning"],
+            "Anything is select.\n"
+            + "Select 1 line, 2 points or a constraint in a sketch before selecting a cell in the spreadsheet",
+        )
+        return
+
     elif len(sels[0].SubElementNames) > 2:
         QtGui.QMessageBox.information(
             None,
