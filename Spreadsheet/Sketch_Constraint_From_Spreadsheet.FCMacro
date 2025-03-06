@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/05 19:40"  # YYYY/MM/DD
+__Date__ = "2025/03/06 08:53"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ ="https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -271,8 +271,9 @@ def isSketchActif():
 def selectedPropertiesInTreeView():
     # "" = do not change the property
     dicoName = {
-        "InternalGeometry.MakeInternals": "",
+
         "Sketch.Constraints": "",
+        "Sketch.ExternalGeometry": "",
         "Profile":"",
         "MapMode":"",
         "AttachmentSupport":"",
@@ -281,6 +282,12 @@ def selectedPropertiesInTreeView():
         "Placement": "",
         "Group":"",
         "Pocket.ReferenceAxis":"",
+        "BaseFeature":"",
+        "AttacherEngine":"",
+        "Tip":"",
+        "Type":"",
+        "Direction":"",
+
         "Placement.Position.x": "Placement.Base.x",
         "Placement.Position.y": "Placement.Base.y",
         "Placement.Position.z": "Placement.Base.z",
@@ -301,8 +308,9 @@ def selectedPropertiesInTreeView():
         "attachementAxisX": "AttachmentOffset.Rotation.Axis.x",
         "attachementAxisY": "AttachmentOffset.Rotation.Axis.y",
         "attachementAxisZ": "AttachmentOffset.Rotation.Axis.z",
-
+        "InternalGeometry.MakeInternals":"MakeInternals",
         "Sketch.ArcFitTolerance": "ArcFitTolerance",
+
     }
     parentToRemove = ["Attachment", "Pad", "Base", "Sketch Based","Part Design", "Draft","Experimental"]
 
@@ -351,9 +359,13 @@ def selectedPropertiesInTreeView():
 
                 data = index.data(QtCore.Qt.DisplayRole)  # data is an str or boolean
 
+
                 if t == 2 and n == 1:
                     propertiesName = data
                 elif t == 2 and n == 2:
+                    print('365 data', data)
+                    print('Type de data', type(data))
+                    propertiesType = type(data)
                     value, expression = extract_value_expression(data)
                     propertiesValue = value
                     propertiesExpression = expression
@@ -389,9 +401,14 @@ def selectedPropertiesInTreeView():
             del propertiesParents_inverse[
                 0
             ]  # remove the top parents if he belong to parentToRemove
-    propertiesNameCompleteStr = (
-        ".".join(propertiesParents_inverse) + "." + propertiesName
-    )
+
+
+    if not None in propertiesParents_inverse:
+        propertiesNameCompleteStr = (
+            ".".join(propertiesParents_inverse) + "." + propertiesName
+        )
+    else:
+        print("None found. Selection not allowed.")
     if propertiesNameCompleteStr.startswith("."):
         propertiesNameCompleteStr = propertiesNameCompleteStr[1:]
 
@@ -411,6 +428,7 @@ def selectedPropertiesInTreeView():
         propertiesTip,
         propertiesValue,
         propertiesExpression,
+        propertiesType,
     )
 
 
@@ -427,8 +445,9 @@ def propertiesParentObjectAndPropertiesNameInTreeView():
         propertiesTip,
         propertiesValue,
         propertiesExpression,
+        propertiesType,
     ) = selectedPropertiesInTreeView()
-    return (propertiesParentObject, propertiesNameCompleteStrDico)
+    return (propertiesParentObject, propertiesNameCompleteStrDico, propertiesType)
 
 
 #################################################################################
@@ -2029,11 +2048,14 @@ def main():
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
 
     if myPadOrPocket != None:
-        propertiesParentObject, propertiesNameCompleteStrDico = (
+        propertiesParentObject, propertiesNameCompleteStrDico, propertiesType = (
             propertiesParentObjectAndPropertiesNameInTreeView()
         )
         if propertiesNameCompleteStrDico == "":
             print('Selection not allowed')
+            return
+        elif  propertiesType in [bool]:
+            print('Boolean properties are not editable by the macro.')
             return
         try:
             myPadOrPocket.setExpression(propertiesNameCompleteStrDico, cellExpression)
