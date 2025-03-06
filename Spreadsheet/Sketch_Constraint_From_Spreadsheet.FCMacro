@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/06 08:53"  # YYYY/MM/DD
+__Date__ = "2025/03/06 13:54"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ ="https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -127,7 +127,9 @@ messages = {
         "ClickOnACellBefore": "Cliquez dans une cellule avec une valeur numérique avant de lancer la macro.",
         "NoObjectSelected": "Vous n'avez pas sélectionné d'objets dans le sketch actif."
         + "\nCela veut il dire que vous souhaitez créer automatiquement des alias à droite des cellules sélectionnées"
-        + "en utilisant le texte de ces cellules sélectionnées.",
+        + "en utilisant le texte de ces cellules sélectionnées."
+        + "\n\nA moins que vous souhaitiez modofier directement une propriété dans l'arbre. "
+        +" \n En ce cas sortez du mode d'édition du Sketch.",
         "NoActiveSpreadsheet": "Pas de cellule sélectionnée dans un spreadsheet actif."
         + "\nSélectionnez un objet dans un sketch, puis sélectionnez une cellule dans un spreadsheet.",
         "ConstarintConflicDetected": "Détection de conflit dans les contraintes. Annulation de la création de la conrainte ?",
@@ -181,9 +183,12 @@ messages = {
         + "\n WARNING, check that you are not going to create a circular reference."
         + "\n\nPENDING may appear in the cell. in this case, type Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python in the python console.",
         "ClickOnACellBefore": "Click on a cell with a numeric value before runing the macro",
-        "NoObjectSelected": "You did not select any object in an active sketch."
-        + "\nDoes it mean you want to create alias at the right of selected cells "
-        + "using text in selected cells ?",
+        "NoObjectSelected": "You have not selected any objects in the active sketch."
+        + "\nDoes this mean you want to automatically create aliases to the right of the selected cells"
+        + "using the text of these selected cells?"
+        + "\n\nUnless you wish to directly modify a property in the tree."
+        + "\nIn that case, exit the Sketch editing mode.",
+
         "NoActiveSpreadsheet": "No active spreadsheet with selected cells."
         + "\nSelect objects in sketch, and then select a cell in spreadsheet.",
         "ConstarintConflicDetected": "Constraints conflic detected. Cancel constraint creation?",
@@ -278,8 +283,8 @@ def selectedPropertiesInTreeView():
         "MapMode":"",
         "AttachmentSupport":"",
         "UpToShape":"",
-        "AttachmentOffset":"",
-        "Placement": "",
+        # "AttachmentOffset":"",
+        # "Placement": "",
         "Group":"",
         "Pocket.ReferenceAxis":"",
         "BaseFeature":"",
@@ -341,6 +346,8 @@ def selectedPropertiesInTreeView():
     propertiesValue = ""
     propertiesExpression = ""
     propertiesName = ""
+    propertiesType = ''
+
 
     trees = Gui.getMainWindow().findChildren(QtGui.QTreeView)
     t = 0
@@ -363,9 +370,11 @@ def selectedPropertiesInTreeView():
                 if t == 2 and n == 1:
                     propertiesName = data
                 elif t == 2 and n == 2:
-                    print('365 data', data)
-                    print('Type de data', type(data))
                     propertiesType = type(data)
+                    if type(data) == str:
+                        if data.startswith("[") and data.endswith:
+                            propertiesType='setOf'
+                    print('propertiesType',propertiesType)
                     value, expression = extract_value_expression(data)
                     propertiesValue = value
                     propertiesExpression = expression
@@ -1876,8 +1885,8 @@ def main():
         QtGui.QMessageBox.information(
             None,
             messages[language]["Warning"],
-            "Anything is select.\n"
-            + "Select 1 line, 2 points or a constraint in a sketch before selecting a cell in the spreadsheet",
+            "Anything valid is select.\n"
+            + "Select 1 line, 2 points or a constraint in a sketch in editing mode before selecting a cell in the spreadsheet",
         )
         activateSketchEditingWindow()
         return
@@ -1887,7 +1896,7 @@ def main():
             None,
             messages[language]["Warning"],
             "Anything is select.\n"
-            + "Select 1 line, 2 points or a constraint in a sketch before selecting a cell in the spreadsheet",
+            + "Select 1 line, 2 points or a constraint in a sketch in editing mode before selecting a cell in the spreadsheet",
         )
         return
 
@@ -2054,8 +2063,9 @@ def main():
         if propertiesNameCompleteStrDico == "":
             print('Selection not allowed')
             return
-        elif  propertiesType in [bool]:
-            print('Boolean properties are not editable by the macro.')
+        elif propertiesType in [bool, 'setOf']:
+            print('bool',bool)
+            print('Boolean and multi*values are not editable by the macro.')
             return
         try:
             myPadOrPocket.setExpression(propertiesNameCompleteStrDico, cellExpression)
