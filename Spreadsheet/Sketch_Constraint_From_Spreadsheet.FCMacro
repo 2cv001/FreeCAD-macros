@@ -26,7 +26,7 @@ __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
 __Date__ = "2025/03/06 13:54"  # YYYY/MM/DD
 __Version__ = __Date__
-__Icon__ ="https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
+__Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
 __License__ = "Apache-2.0"
 
@@ -50,12 +50,24 @@ import Sketcher
 import re
 import itertools
 import locale
+import FreeCADGui as Gui
 
 # macro directory (for ini file)
 macroDirectory = App.getUserMacroDir(True)
 config = configparser.ConfigParser()
 ini_file = os.path.join(macroDirectory, "sketchConstraintFromSpreadsheet.ini")
-import FreeCADGui as Gui
+
+# -------------------------------------------------------------------------------
+# for security reason, only for this object, the macro can change the properties
+autorizedTypeForChangeProperties = [
+    "PartDesign::Body",
+    "Sketcher::SketchObject",
+    "PartDesign::Pad",
+    "PartDesign::Groove",
+    "PartDesign::Pocket",
+    "PartDesign::Fillet",
+    "PartDesign::LinearPattern",
+]
 
 
 def recomputeAll():
@@ -129,7 +141,7 @@ messages = {
         + "\nCela veut il dire que vous souhaitez créer automatiquement des alias à droite des cellules sélectionnées"
         + "en utilisant le texte de ces cellules sélectionnées."
         + "\n\nA moins que vous souhaitiez modofier directement une propriété dans l'arbre. "
-        +" \n En ce cas sortez du mode d'édition du Sketch.",
+        + " \n En ce cas sortez du mode d'édition du Sketch.",
         "NoActiveSpreadsheet": "Pas de cellule sélectionnée dans un spreadsheet actif."
         + "\nSélectionnez un objet dans un sketch, puis sélectionnez une cellule dans un spreadsheet.",
         "ConstarintConflicDetected": "Détection de conflit dans les contraintes. Annulation de la création de la conrainte ?",
@@ -188,7 +200,6 @@ messages = {
         + "using the text of these selected cells?"
         + "\n\nUnless you wish to directly modify a property in the tree."
         + "\nIn that case, exit the Sketch editing mode.",
-
         "NoActiveSpreadsheet": "No active spreadsheet with selected cells."
         + "\nSelect objects in sketch, and then select a cell in spreadsheet.",
         "ConstarintConflicDetected": "Constraints conflic detected. Cancel constraint creation?",
@@ -276,27 +287,37 @@ def isSketchActif():
 def selectedPropertiesInTreeView():
     # "" = do not change the property
     dicoName = {
-
         "Sketch.Constraints": "",
         "Sketch.ExternalGeometry": "",
-        "Profile":"",
-        "MapMode":"",
-        "AttachmentSupport":"",
-        "UpToShape":"",
+        "Profile": "",
+        "MapMode": "",
+        "AttachmentSupport": "",
+        "UpToShape": "",
         # "AttachmentOffset":"",
         # "Placement": "",
-        "Group":"",
-        "Pocket.ReferenceAxis":"",
-        "BaseFeature":"",
-        "AttacherEngine":"",
-        "Tip":"",
-        "Type":"",
-        "Direction":"",
-
+        "Group": "",
+        "Pocket.ReferenceAxis": "",
+        "BaseFeature": "",
+        "AttacherEngine": "",
+        "Tip": "",
+        "Type": "",
+        "Direction": "",
+        "ReferenceAxis": "",
+        "UpToFace": "",
+        "Pocket.Type": "",
+        "Hole.ThreadSize": "",
+        "Hole.ThreadType": "",
+        "Hole.ThreadClass": "",
+        "Hole.ThreadFit": "",
+        "Hole.ThreadDirection": "",
+        "Hole.HoleCutType": "",
+        "Hole.DepthType": "",
+        "Hole.DrillPoint": "",
+        "Groove.Type": "",
         "Placement.Position.x": "Placement.Base.x",
         "Placement.Position.y": "Placement.Base.y",
         "Placement.Position.z": "Placement.Base.z",
-        "Placement.Axederotation.x":"Placement.Rotation.Axis.x",
+        "Placement.Axederotation.x": "Placement.Rotation.Axis.x",
         "Placement.Axederotation.y": "Placement.Rotation.Axis.y",
         "Placement.Axederotation.z": "Placement.Rotation.Axis.z",
         "AttachmentOffset.Position.x": ".AttachmentOffset.Base.x",
@@ -309,15 +330,29 @@ def selectedPropertiesInTreeView():
         "Placement.Axis.x": "Placement.Rotation.Axis.x",
         "Placement.Axis.y": "Placement.Rotation.Axis.y",
         "Placement.Axis.z": "Placement.Rotation.Axis.z",
-        "Placement.Angle" : "Placement.Rotation.Angle",
+        "Placement.Angle": "Placement.Rotation.Angle",
         "attachementAxisX": "AttachmentOffset.Rotation.Axis.x",
         "attachementAxisY": "AttachmentOffset.Rotation.Axis.y",
         "attachementAxisZ": "AttachmentOffset.Rotation.Axis.z",
-        "InternalGeometry.MakeInternals":"MakeInternals",
+        "InternalGeometry.MakeInternals": "MakeInternals",
         "Sketch.ArcFitTolerance": "ArcFitTolerance",
-
     }
-    parentToRemove = ["Attachment", "Pad", "Base", "Sketch Based","Part Design", "Draft","Experimental"]
+    parentToRemove = [
+        "Attachment",
+        "Pad",
+        "Base",
+        "Sketch Based",
+        "Part Design",
+        "Draft",
+        "Experimental",
+    ]
+    try:
+        objectName = Gui.Selection.getSelection()[0].Name
+        objectType = Gui.Selection.getSelection()[0].TypeId
+        print("343 objectType", objectType)
+    except:
+        objectName = ""
+        objectType = ""
 
     def has_parent(index):
         return index.parent().isValid()
@@ -341,68 +376,56 @@ def selectedPropertiesInTreeView():
     propertiesName = ""
     propertiesNameCompleteStr = ""
     propertiesParents = []
+    # tabProperty = []
     propertiesTip = ""
     propertiesValue = ""
     propertiesExpression = ""
     propertiesName = ""
-    propertiesType = ''
-
+    propertiesType = ""
 
     trees = Gui.getMainWindow().findChildren(QtGui.QTreeView)
 
     for tree in trees:
 
         n = 0
-        tabProperty = []
+
         for index in tree.selectedIndexes():
             n = n + 1
-            print('n',n)
-
 
             if (
                 isinstance(index, QtCore.QModelIndex)
                 and index.isValid()
                 and index.model() is not None
             ):
-
                 data = index.data(QtCore.Qt.DisplayRole)  # data is an str or boolean
-                print('data',data)
-
-                if tree.objectName() == 'propertyEditorData': #t == 2:
+                if tree.objectName() == "propertyEditorData":  # t == 2:
                     if n == 1:
                         propertiesName = data
-                    if n == 2:
-
-                        propertiesType = type(data)
-                        if type(data) == str:
-                            if data.startswith("[") and data.endswith("]"):
-                                propertiesType='setOf'
-                        print('propertiesType',propertiesType)
-                        value, expression = extract_value_expression(data)
-                        propertiesValue = value
-                        propertiesExpression = expression
-
-                        tip = index.data(QtCore.Qt.ToolTipRole)
-                        propertiesTip = tip
-
-
-                    if n == 1:
                         itemData = index.model().itemData(index)
                         if itemData != {}:
                             if 0 in itemData:
                                 if n == 1:
-                                    tabProperty = [itemData[0]]
+                                    propertiesParents = [itemData[0]]
                                     parent = index.parent()
-                                    tabProperty.append(parent.data())
+                                    propertiesParents.append(parent.data())
                                     while has_parent(parent):
                                         parent = parent.parent()
-                                        tabProperty.append(parent.data())
-                                    del tabProperty[
+                                        propertiesParents.append(parent.data())
+                                    del propertiesParents[
                                         0
                                     ]  # the first element is the propertyName, not a parent
 
-                                    propertiesParents = tabProperty
-
+                    if n == 2:
+                        propertiesType = type(data)
+                        if type(data) == str:
+                            if data.startswith("[") and data.endswith("]"):
+                                propertiesType = "setOf"
+                        print("propertiesType", propertiesType)
+                        propertiesValue, propertiesExpression = (
+                            extract_value_expression(data)
+                        )
+                        tip = index.data(QtCore.Qt.ToolTipRole)
+                        propertiesTip = tip
 
     propertiesName = propertiesName.replace(" ", "")
     propertiesParents_inverse = propertiesParents[::-1]
@@ -412,7 +435,6 @@ def selectedPropertiesInTreeView():
             del propertiesParents_inverse[
                 0
             ]  # remove the top parents if he belong to parentToRemove
-
 
     if not None in propertiesParents_inverse:
         propertiesNameCompleteStr = (
@@ -428,9 +450,9 @@ def selectedPropertiesInTreeView():
 
     if propertiesNameCompleteStrDico == "none":
         propertiesNameCompleteStrDico = propertiesNameCompleteStr
-        # print('pas trouvé dans le dico', propertiesNameCompleteStr)
-    print('propertiesNameCompleteStr',propertiesNameCompleteStr)
-    print('propertiesNameCompleteStrDico',propertiesNameCompleteStrDico)
+
+    print("propertiesNameCompleteStr", propertiesNameCompleteStr)
+    print("propertiesNameCompleteStrDico", propertiesNameCompleteStrDico)
     return (
         propertiesName,
         propertiesNameCompleteStrDico,
@@ -439,6 +461,8 @@ def selectedPropertiesInTreeView():
         propertiesValue,
         propertiesExpression,
         propertiesType,
+        objectName,
+        objectType,
     )
 
 
@@ -455,8 +479,10 @@ def propertiesParentObjectAndPropertiesNameInTreeView():
         propertiesValue,
         propertiesExpression,
         propertiesType,
+        objectName,
+        objectType,
     ) = selectedPropertiesInTreeView()
-    return (propertiesNameCompleteStrDico, propertiesType)
+    return (propertiesNameCompleteStrDico, propertiesType, objectName, objectType)
 
 
 #################################################################################
@@ -1891,7 +1917,7 @@ def main():
         activateSketchEditingWindow()
         return
 
-    if len(sels)==0 :
+    if len(sels) == 0:
         QtGui.QMessageBox.information(
             None,
             messages[language]["Warning"],
@@ -2057,15 +2083,19 @@ def main():
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
 
     if myPadOrPocket != None:
-        propertiesNameCompleteStrDico, propertiesType = (
+        propertiesNameCompleteStrDico, propertiesType, objectName, objectType = (
             propertiesParentObjectAndPropertiesNameInTreeView()
         )
         if propertiesNameCompleteStrDico == "":
-            print('Selection not allowed')
+            print("Selection not allowed")
             return
-        elif propertiesType in [bool, 'setOf']:
-            print('bool',bool)
-            print('Boolean and multi*values are not editable by the macro.')
+        elif propertiesType in [bool, "setOf"]:
+            print("bool", bool)
+            print("Boolean and multi*values are not editable by the macro.")
+            return
+        elif objectType not in  autorizedTypeForChangeProperties:
+            print('The object',objectName, 'is not part of the list of objects allowed for property changes.'
+                  +' You can adjust it easily in the macro code')
             return
         try:
             myPadOrPocket.setExpression(propertiesNameCompleteStrDico, cellExpression)
