@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/06 13:54"  # YYYY/MM/DD
+__Date__ = "2025/03/06 22:46"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -67,6 +67,19 @@ autorizedTypeForChangeProperties = [
     "PartDesign::Pocket",
     "PartDesign::Fillet",
     "PartDesign::LinearPattern",
+]
+autorizedPropertiesToChange = [
+    'x',
+    'y',
+    'z',
+    'Angle',
+    'Label',
+    'Length',
+    'Length2',
+    'ArcFitTolerance',
+    'Offset',
+    'TaperAngle',
+    'TaperAngle2',
 ]
 
 
@@ -482,7 +495,7 @@ def propertiesParentObjectAndPropertiesNameInTreeView():
         objectName,
         objectType,
     ) = selectedPropertiesInTreeView()
-    return (propertiesNameCompleteStrDico, propertiesType, objectName, objectType)
+    return (propertiesName, propertiesNameCompleteStrDico, propertiesType, objectName, objectType)
 
 
 #################################################################################
@@ -2083,7 +2096,7 @@ def main():
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
 
     if myPadOrPocket != None:
-        propertiesNameCompleteStrDico, propertiesType, objectName, objectType = (
+        propertiesName, propertiesNameCompleteStrDico, propertiesType, objectName, objectType = (
             propertiesParentObjectAndPropertiesNameInTreeView()
         )
         if propertiesNameCompleteStrDico == "":
@@ -2093,9 +2106,13 @@ def main():
             print("bool", bool)
             print("Boolean and multi*values are not editable by the macro.")
             return
-        elif objectType not in  autorizedTypeForChangeProperties:
+        elif objectType not in autorizedTypeForChangeProperties:
             print('The object',objectName, 'is not part of the list of objects allowed for property changes.'
                   +' You can adjust it easily in the macro code')
+            return
+        print('propertiesName',propertiesName)
+        if propertiesName not in autorizedPropertiesToChange:
+            print('Property', propertiesName, 'not autorized. You can add it in macro code')
             return
         try:
             myPadOrPocket.setExpression(propertiesNameCompleteStrDico, cellExpression)
