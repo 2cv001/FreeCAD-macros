@@ -340,7 +340,6 @@ def selectedPropertiesInTreeView():
 
     propertiesName = ""
     propertiesNameCompleteStr = ""
-    propertiesParentObject = ""
     propertiesParents = []
     propertiesTip = ""
     propertiesValue = ""
@@ -350,13 +349,15 @@ def selectedPropertiesInTreeView():
 
 
     trees = Gui.getMainWindow().findChildren(QtGui.QTreeView)
-    t = 0
+
     for tree in trees:
-        t = t + 1
+
         n = 0
         tabProperty = []
         for index in tree.selectedIndexes():
             n = n + 1
+            print('n',n)
+
 
             if (
                 isinstance(index, QtCore.QModelIndex)
@@ -365,42 +366,43 @@ def selectedPropertiesInTreeView():
             ):
 
                 data = index.data(QtCore.Qt.DisplayRole)  # data is an str or boolean
+                print('data',data)
+
+                if tree.objectName() == 'propertyEditorData': #t == 2:
+                    if n == 1:
+                        propertiesName = data
+                    if n == 2:
+
+                        propertiesType = type(data)
+                        if type(data) == str:
+                            if data.startswith("[") and data.endswith("]"):
+                                propertiesType='setOf'
+                        print('propertiesType',propertiesType)
+                        value, expression = extract_value_expression(data)
+                        propertiesValue = value
+                        propertiesExpression = expression
+
+                        tip = index.data(QtCore.Qt.ToolTipRole)
+                        propertiesTip = tip
 
 
-                if t == 2 and n == 1:
-                    propertiesName = data
-                elif t == 2 and n == 2:
-                    propertiesType = type(data)
-                    if type(data) == str:
-                        if data.startswith("[") and data.endswith:
-                            propertiesType='setOf'
-                    print('propertiesType',propertiesType)
-                    value, expression = extract_value_expression(data)
-                    propertiesValue = value
-                    propertiesExpression = expression
-                elif t == 3 and n == 1:
-                    propertiesParentObject = data
-
-                if t == 2 and n == 1:
-                    itemData = index.model().itemData(index)
-                    if itemData != {}:
-                        if 0 in itemData:
-                            if n == 1:
-                                tabProperty = [itemData[0]]
-                                parent = index.parent()
-                                tabProperty.append(parent.data())
-                                while has_parent(parent):
-                                    parent = parent.parent()
+                    if n == 1:
+                        itemData = index.model().itemData(index)
+                        if itemData != {}:
+                            if 0 in itemData:
+                                if n == 1:
+                                    tabProperty = [itemData[0]]
+                                    parent = index.parent()
                                     tabProperty.append(parent.data())
-                                del tabProperty[
-                                    0
-                                ]  # the first element is the propertyName, not a parent
+                                    while has_parent(parent):
+                                        parent = parent.parent()
+                                        tabProperty.append(parent.data())
+                                    del tabProperty[
+                                        0
+                                    ]  # the first element is the propertyName, not a parent
 
-                                propertiesParents = tabProperty
+                                    propertiesParents = tabProperty
 
-                if t == 2 and n == 2:  # tip
-                    tip = index.data(QtCore.Qt.ToolTipRole)
-                    propertiesTip = tip
 
     propertiesName = propertiesName.replace(" ", "")
     propertiesParents_inverse = propertiesParents[::-1]
@@ -431,7 +433,6 @@ def selectedPropertiesInTreeView():
     print('propertiesNameCompleteStrDico',propertiesNameCompleteStrDico)
     return (
         propertiesName,
-        propertiesParentObject,
         propertiesNameCompleteStrDico,
         propertiesParents,
         propertiesTip,
@@ -448,7 +449,6 @@ def selectedPropertiesInTreeView():
 def propertiesParentObjectAndPropertiesNameInTreeView():
     (
         propertiesName,
-        propertiesParentObject,
         propertiesNameCompleteStrDico,
         propertiesParents,
         propertiesTip,
@@ -456,7 +456,7 @@ def propertiesParentObjectAndPropertiesNameInTreeView():
         propertiesExpression,
         propertiesType,
     ) = selectedPropertiesInTreeView()
-    return (propertiesParentObject, propertiesNameCompleteStrDico, propertiesType)
+    return (propertiesNameCompleteStrDico, propertiesType)
 
 
 #################################################################################
@@ -2057,7 +2057,7 @@ def main():
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
 
     if myPadOrPocket != None:
-        propertiesParentObject, propertiesNameCompleteStrDico, propertiesType = (
+        propertiesNameCompleteStrDico, propertiesType = (
             propertiesParentObjectAndPropertiesNameInTreeView()
         )
         if propertiesNameCompleteStrDico == "":
