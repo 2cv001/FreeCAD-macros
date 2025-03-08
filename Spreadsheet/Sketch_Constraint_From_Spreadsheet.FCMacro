@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/08 07:19"  # YYYY/MM/DD
+__Date__ = "2025/03/08 21:39"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -67,12 +67,14 @@ autorizedTypeForChangeProperties = [
     "PartDesign::Pocket",
     "PartDesign::Fillet",
     "PartDesign::LinearPattern",
+    "PartDesign::Hole",
 ]
 autorizedPropertiesToChange = [
     'x',
     'y',
     'z',
     'Angle',
+    'Angle2',
     'Label',
     'Length',
     'Length2',
@@ -80,6 +82,8 @@ autorizedPropertiesToChange = [
     'Offset',
     'TaperAngle',
     'TaperAngle2',
+    'Diameter',
+    'Depth',
 ]
 
 
@@ -300,33 +304,7 @@ def isSketchActif():
 def selectedPropertiesInTreeView():
     # "" = do not change the property
     dicoName = {
-        #"Sketch.Constraints": "",
-        #"Sketch.ExternalGeometry": "",
-        #"Profile": "",
-        #"MapMode": "",
-        #"AttachmentSupport": "",
-        #"UpToShape": "",
-        ## "AttachmentOffset":"",
-        ## "Placement": "",
-        #"Group": "",
-        #"Pocket.ReferenceAxis": "",
-        #"BaseFeature": "",
-        #"AttacherEngine": "",
-        #"Tip": "",
-        #"Type": "",
-        #"Direction": "",
-        #"ReferenceAxis": "",
-        #"UpToFace": "",
-        #"Pocket.Type": "",
-        #"Hole.ThreadSize": "",
-        #"Hole.ThreadType": "",
-        #"Hole.ThreadClass": "",
-        #"Hole.ThreadFit": "",
-        #"Hole.ThreadDirection": "",
-        #"Hole.HoleCutType": "",
-        #"Hole.DepthType": "",
-        #"Hole.DrillPoint": "",
-        #"Groove.Type": "",
+
         "Placement.Position.x": "Placement.Base.x",
         "Placement.Position.y": "Placement.Base.y",
         "Placement.Position.z": "Placement.Base.z",
@@ -340,6 +318,9 @@ def selectedPropertiesInTreeView():
         "AttachmentOffset.Axis.y": ".AttachmentOffset.Rotation.Axis.y",
         "AttachmentOffset.Axis.z": ".AttachmentOffset.Rotation.Axis.z",
         "AttachmentOffset.Angle": ".AttachmentOffset.Rotation.Angle",
+        "AttachmentOffset.Axederotation.x": ".AttachmentOffset.Rotation.Axis.x",
+        "AttachmentOffset.Axederotation.y":".AttachmentOffset.Rotation.Axis.y",
+        "AttachmentOffset.Axederotation.z":".AttachmentOffset.Rotation.Axis.z",
         "Placement.Axis.x": "Placement.Rotation.Axis.x",
         "Placement.Axis.y": "Placement.Rotation.Axis.y",
         "Placement.Axis.z": "Placement.Rotation.Axis.z",
@@ -362,7 +343,6 @@ def selectedPropertiesInTreeView():
     try:
         objectName = Gui.Selection.getSelection()[0].Name
         objectType = Gui.Selection.getSelection()[0].TypeId
-        print("343 objectType", objectType)
     except:
         objectName = ""
         objectType = ""
@@ -395,6 +375,8 @@ def selectedPropertiesInTreeView():
     propertiesExpression = ""
     propertiesName = ""
     propertiesType = ""
+    properties_editable = False
+    properties_enabled = True
 
     trees = Gui.getMainWindow().findChildren(QtGui.QTreeView)
 
@@ -433,12 +415,13 @@ def selectedPropertiesInTreeView():
                         if type(data) == str:
                             if data.startswith("[") and data.endswith("]"):
                                 propertiesType = "setOf"
-                        print("propertiesType", propertiesType)
                         propertiesValue, propertiesExpression = (
                             extract_value_expression(data)
                         )
                         tip = index.data(QtCore.Qt.ToolTipRole)
                         propertiesTip = tip
+                        properties_editable = bool(index.flags() & QtCore.Qt.ItemIsEditable)
+                        properties_enabled = bool(index.flags() & QtCore.Qt.ItemIsEnabled)
 
     propertiesName = propertiesName.replace(" ", "")
     propertiesParents_inverse = propertiesParents[::-1]
@@ -466,6 +449,7 @@ def selectedPropertiesInTreeView():
 
     print("propertiesNameCompleteStr", propertiesNameCompleteStr)
     print("propertiesNameCompleteStrDico", propertiesNameCompleteStrDico)
+    print('propertiesName',propertiesName)
     return (
         propertiesName,
         propertiesNameCompleteStrDico,
@@ -476,6 +460,8 @@ def selectedPropertiesInTreeView():
         propertiesType,
         objectName,
         objectType,
+        properties_editable,
+        properties_enabled,
     )
 
 
@@ -494,8 +480,12 @@ def propertiesParentObjectAndPropertiesNameInTreeView():
         propertiesType,
         objectName,
         objectType,
+        properties_editable,
+        properties_enabled,
     ) = selectedPropertiesInTreeView()
-    return (propertiesName, propertiesNameCompleteStrDico, propertiesType, objectName, objectType)
+    return (propertiesName, propertiesNameCompleteStrDico, propertiesType, objectName, objectType,
+            properties_editable,
+            properties_enabled,)
 
 
 #################################################################################
@@ -2096,21 +2086,22 @@ def main():
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
 
     if myPadOrPocket != None:
-        propertiesName, propertiesNameCompleteStrDico, propertiesType, objectName, objectType = (
+        propertiesName, propertiesNameCompleteStrDico, propertiesType, objectName, objectType, properties_editable, properties_enabled, = (
             propertiesParentObjectAndPropertiesNameInTreeView()
         )
         if propertiesNameCompleteStrDico == "":
             print("Selection not allowed")
             return
+        if not (properties_editable and properties_enabled):
+            print('property', propertiesName, 'not editable')
+            return
         elif propertiesType in [bool, "setOf"]:
-            print("bool", bool)
             print("Boolean and multi*values are not editable by the macro.")
             return
         elif objectType not in autorizedTypeForChangeProperties:
             print('The object',objectName, 'is not part of the list of objects allowed for property changes.'
                   +' You can adjust it easily in the macro code')
             return
-        print('propertiesName',propertiesName)
         if propertiesName not in autorizedPropertiesToChange:
             print('Property', propertiesName, 'not autorized. You can add it in macro code')
             return
