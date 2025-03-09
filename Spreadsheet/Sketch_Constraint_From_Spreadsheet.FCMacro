@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/08 21:39"  # YYYY/MM/DD
+__Date__ = "2025/03/09 07:29"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -58,8 +58,12 @@ config = configparser.ConfigParser()
 ini_file = os.path.join(macroDirectory, "sketchConstraintFromSpreadsheet.ini")
 
 # -------------------------------------------------------------------------------
-# for security reason, only for this object, the macro can change the properties
-autorizedTypeForChangeProperties = [
+# for security reason, only for this object, the macro can change the property
+# todo :
+#  now code look if the property is enable and editable so autorisedTypeForChangeproperty will be removed
+# same for autorisedpropertyToChange
+
+autorisedTypeForChangeproperty = [
     "PartDesign::Body",
     "Sketcher::SketchObject",
     "PartDesign::Pad",
@@ -69,7 +73,7 @@ autorizedTypeForChangeProperties = [
     "PartDesign::LinearPattern",
     "PartDesign::Hole",
 ]
-autorizedPropertiesToChange = [
+autorisedpropertyToChange = [
     'x',
     'y',
     'z',
@@ -298,11 +302,14 @@ def isSketchActif():
 
 
 # ------------------------------------------------
-# get selected properties in treeView
+# get selected property in treeView
 # select only one object and one or more property
 # ------------------------------------------------
-def selectedPropertiesInTreeView():
+def selectedpropertyInTreeView():
     # "" = do not change the property
+    # use a dico is necessary because it's not always the same "name property"  given by code
+    # index.data(QtCore.Qt.DisplayRole) and the "name property"
+    # for setExpression(propertyNameCompleteStrDico, cellExpression)
     dicoName = {
 
         "Placement.Position.x": "Placement.Base.x",
@@ -366,17 +373,17 @@ def selectedPropertiesInTreeView():
         expression = s.replace(")", "").strip()
         return value, expression
 
-    propertiesName = ""
-    propertiesNameCompleteStr = ""
-    propertiesParents = []
+    propertyName = ""
+    propertyNameCompleteStr = ""
+    propertyParents = []
     # tabProperty = []
-    propertiesTip = ""
-    propertiesValue = ""
-    propertiesExpression = ""
-    propertiesName = ""
-    propertiesType = ""
-    properties_editable = False
-    properties_enabled = True
+    propertyTip = ""
+    propertyValue = ""
+    propertyExpression = ""
+    propertyName = ""
+    propertyType = ""
+    property_editable = False
+    property_enabled = True
 
     trees = Gui.getMainWindow().findChildren(QtGui.QTreeView)
 
@@ -395,97 +402,102 @@ def selectedPropertiesInTreeView():
                 data = index.data(QtCore.Qt.DisplayRole)  # data is an str or boolean
                 if tree.objectName() == "propertyEditorData":  # t == 2:
                     if n == 1:
-                        propertiesName = data
+                        propertyName = data
                         itemData = index.model().itemData(index)
                         if itemData != {}:
                             if 0 in itemData:
                                 if n == 1:
-                                    propertiesParents = [itemData[0]]
+                                    propertyParents = [itemData[0]]
                                     parent = index.parent()
-                                    propertiesParents.append(parent.data())
+                                    propertyParents.append(parent.data())
                                     while has_parent(parent):
                                         parent = parent.parent()
-                                        propertiesParents.append(parent.data())
-                                    del propertiesParents[
+                                        propertyParents.append(parent.data())
+                                    del propertyParents[
                                         0
                                     ]  # the first element is the propertyName, not a parent
 
                     if n == 2:
-                        propertiesType = type(data)
+                        propertyType = type(data)
                         if type(data) == str:
                             if data.startswith("[") and data.endswith("]"):
-                                propertiesType = "setOf"
-                        propertiesValue, propertiesExpression = (
+                                propertyType = "setOf"
+                        propertyValue, propertyExpression = (
                             extract_value_expression(data)
                         )
                         tip = index.data(QtCore.Qt.ToolTipRole)
-                        propertiesTip = tip
-                        properties_editable = bool(index.flags() & QtCore.Qt.ItemIsEditable)
-                        properties_enabled = bool(index.flags() & QtCore.Qt.ItemIsEnabled)
+                        propertyTip = tip
+                        property_editable = bool(index.flags() & QtCore.Qt.ItemIsEditable)
+                        property_enabled = bool(index.flags() & QtCore.Qt.ItemIsEnabled)
 
-    propertiesName = propertiesName.replace(" ", "")
-    propertiesParents_inverse = propertiesParents[::-1]
+    propertyName = propertyName.replace(" ", "")
+    propertyParents_inverse = propertyParents[::-1]
 
-    if len(propertiesParents_inverse) > 0:
-        if propertiesParents_inverse[0] in parentToRemove:
-            del propertiesParents_inverse[
+    if len(propertyParents_inverse) > 0:
+        if propertyParents_inverse[0] in parentToRemove:
+            del propertyParents_inverse[
                 0
             ]  # remove the top parents if he belong to parentToRemove
 
-    if not None in propertiesParents_inverse:
-        propertiesNameCompleteStr = (
-            ".".join(propertiesParents_inverse) + "." + propertiesName
+    if not None in propertyParents_inverse:
+        propertyNameCompleteStr = (
+            ".".join(propertyParents_inverse) + "." + propertyName
         )
     else:
         print("None found. Selection not allowed.")
-    if propertiesNameCompleteStr.startswith("."):
-        propertiesNameCompleteStr = propertiesNameCompleteStr[1:]
+    if propertyNameCompleteStr.startswith("."):
+        propertyNameCompleteStr = propertyNameCompleteStr[1:]
 
-    propertiesNameCompleteStr = propertiesNameCompleteStr.replace(" ", "")
-    propertiesNameCompleteStrDico = dicoName.get(propertiesNameCompleteStr, "none")
+    propertyNameCompleteStr = propertyNameCompleteStr.replace(" ", "")
+    propertyNameCompleteStrDico = dicoName.get(propertyNameCompleteStr, "none")
 
-    if propertiesNameCompleteStrDico == "none":
-        propertiesNameCompleteStrDico = propertiesNameCompleteStr
+    if propertyNameCompleteStrDico == "none":
+        propertyNameCompleteStrDico = propertyNameCompleteStr
 
-    print("propertiesNameCompleteStr", propertiesNameCompleteStr)
-    print("propertiesNameCompleteStrDico", propertiesNameCompleteStrDico)
-    print('propertiesName',propertiesName)
+    #print("propertyNameCompleteStr", propertyNameCompleteStr)
+    print("property :", propertyNameCompleteStrDico)
+    #print('property : ',propertyName)
     return (
-        propertiesName,
-        propertiesNameCompleteStrDico,
-        propertiesParents,
-        propertiesTip,
-        propertiesValue,
-        propertiesExpression,
-        propertiesType,
+        propertyName,
+        propertyNameCompleteStrDico,
+        propertyParents,
+        propertyTip,
+        propertyValue,
+        propertyExpression,
+        propertyType,
         objectName,
         objectType,
-        properties_editable,
-        properties_enabled,
+        property_editable,
+        property_enabled,
     )
 
 
 # ------------------------------------------------
-# get propertiesParentObject (pad, sketch...) and propertiesName
-# from selectedPropertiesInTreeView
+# get propertyParentObject (pad, sketch...) and propertyName
+# from selectedpropertyInTreeView
+# todo :
+#  - put here code using dico and make othres change to be compatible with
+#    my selectedpropertyInTreeView in my library
+#  - if no property selected, take one by default
+# add
 # ------------------------------------------------
-def propertiesParentObjectAndPropertiesNameInTreeView():
+def propertyParentObjectAndpropertyNameInTreeView():
     (
-        propertiesName,
-        propertiesNameCompleteStrDico,
-        propertiesParents,
-        propertiesTip,
-        propertiesValue,
-        propertiesExpression,
-        propertiesType,
+        propertyName,
+        propertyNameCompleteStrDico,
+        propertyParents,
+        propertyTip,
+        propertyValue,
+        propertyExpression,
+        propertyType,
         objectName,
         objectType,
-        properties_editable,
-        properties_enabled,
-    ) = selectedPropertiesInTreeView()
-    return (propertiesName, propertiesNameCompleteStrDico, propertiesType, objectName, objectType,
-            properties_editable,
-            properties_enabled,)
+        property_editable,
+        property_enabled,
+    ) = selectedpropertyInTreeView()
+    return (propertyName, propertyNameCompleteStrDico, propertyType, objectName, objectType,
+            property_editable,
+            property_enabled,)
 
 
 #################################################################################
@@ -2086,27 +2098,29 @@ def main():
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
 
     if myPadOrPocket != None:
-        propertiesName, propertiesNameCompleteStrDico, propertiesType, objectName, objectType, properties_editable, properties_enabled, = (
-            propertiesParentObjectAndPropertiesNameInTreeView()
+        propertyName, propertyNameCompleteStrDico, propertyType, objectName, objectType, property_editable, property_enabled, = (
+            propertyParentObjectAndpropertyNameInTreeView()
         )
-        if propertiesNameCompleteStrDico == "":
+        if propertyNameCompleteStrDico == "":
             print("Selection not allowed")
             return
-        if not (properties_editable and properties_enabled):
-            print('property', propertiesName, 'not editable')
+        if propertyType in [bool, "setOf"]:
+            print("Boolean and multi values are not editable by the macro."+
+                  "It will be possible in a next version")
             return
-        elif propertiesType in [bool, "setOf"]:
-            print("Boolean and multi*values are not editable by the macro.")
-            return
-        elif objectType not in autorizedTypeForChangeProperties:
+        if objectType not in autorisedTypeForChangeproperty:
             print('The object',objectName, 'is not part of the list of objects allowed for property changes.'
                   +' You can adjust it easily in the macro code')
             return
-        if propertiesName not in autorizedPropertiesToChange:
-            print('Property', propertiesName, 'not autorized. You can add it in macro code')
+        if propertyName not in autorisedpropertyToChange:
+            print('Property', propertyName, 'not autorised. You can add it in macro code')
             return
+        if not (property_editable and property_enabled):
+            print(propertyName, 'property not editable in this context. Make it editable beforehand.')
+            return
+
         try:
-            myPadOrPocket.setExpression(propertiesNameCompleteStrDico, cellExpression)
+            myPadOrPocket.setExpression(propertyNameCompleteStrDico, cellExpression)
         except:
             print("No property selected, or property not editable")
             return
