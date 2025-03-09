@@ -141,7 +141,7 @@ messages = {
         "NoPasDe": "Pas de",
         "foundTrouve": "trouvé",
         "foundCreateOne": "trouvé, en créer un ?",
-        "Cancel": "&Abandon",
+        "Cancel": "Aban&don",
         "Warning": "Attention",
         "XYPlane": "Plan XY",
         "XZPlane": "Plan XZ",
