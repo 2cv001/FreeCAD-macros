@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/09 10:27"  # YYYY/MM/DD
+__Date__ = "2025/03/13 07:09"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -63,33 +63,48 @@ ini_file = os.path.join(macroDirectory, "sketchConstraintFromSpreadsheet.ini")
 #  now code look if the property is enable and editable so autorisedTypeForChangeproperty will be removed
 # same for autorisedpropertyToChange
 
-autorisedTypeForChangeproperty = [
-    "PartDesign::Body",
-    "Sketcher::SketchObject",
-    "PartDesign::Pad",
-    "PartDesign::Groove",
-    "PartDesign::Pocket",
-    "PartDesign::Fillet",
-    "PartDesign::LinearPattern",
-    "PartDesign::Hole",
-]
 autorisedpropertyToChange = [
     'x',
     'y',
     'z',
     'Angle',
+    'Angle1',
     'Angle2',
+    'Angle3',
     'Label',
     'Length',
     'Length2',
+    'Width',
+    'Height',
     'ArcFitTolerance',
     'Offset',
     'TaperAngle',
     'TaperAngle2',
     'Diameter',
     'Depth',
+    'Radius',
+    'Radius1',
+    'Radius2',
+    'Radius3',
+    'FirstAngle',
+    'SecondAngle',
+    'Size',
+    'Size2',
+    'ThreadDiameter',
+    'ThreadDirection',
+    'HoleCutDiameter',
+    'HoleCutDepth',
+    'HoleCutCountersinkAngle',
+    'DrillPointAngle',
+    'TaperedAngle'
+    'ThreadDepth'
+    'CustomThreadClearance',
 ]
 
+#---------------------------------------------------------------------------
+# for these words, macro will ask if we want to multiply *2 to have a diameter
+#---------------------------------------------------------------------------
+radiusWord = ['radius', 'rayon']
 
 def recomputeAll():
     for obj in App.ActiveDocument.Objects:
@@ -180,6 +195,8 @@ messages = {
         + "\nDonne la possibilité d'annuler la contrainte ",
         "getConstraintTypeWindowTitle": "Choix du type de contrainte",
         "getConstraintTypeCheckboxAlias": "Textes pour alias automatiques dans cette cellule et en dessous :",
+        "radiusDetecxted": "Le mot rayon se trouve dans l'allias,"
+                           + "souhaitez-vous multiplier par 2 pour avoir un diamètre ? ",
     },
     "English": {
         "DialogCheckbox1Document": "Document",
@@ -238,6 +255,11 @@ messages = {
         "getConstraintTypeCheckboxConflicToolTip": "Warning in case of constraint conflict. Gives the possibility to cancel the constraint.",
         "getConstraintTypeWindowTitle": "Choose a constraint type",
         "getConstraintTypeCheckboxAlias": "Texts for Automatic alias labels for this cell, and under :",
+        "radiusDetecxted":  "The word radius is present in the alias,"
+        +"would you like the formula to multiply the value by 2 to obtain a diameter? ",
+
+
+
     },
 }
 
@@ -348,6 +370,9 @@ def selectedpropertyInTreeView():
         "Part Design",
         "Draft",
         "Experimental",
+        "Prism",
+        "Pocket",
+        'Hole',
     ]
     try:
         objectName = Gui.Selection.getSelection()[0].Name
@@ -456,9 +481,9 @@ def selectedpropertyInTreeView():
     if propertyNameCompleteStrDico == "none":
         propertyNameCompleteStrDico = propertyNameCompleteStr
 
-    #print("propertyNameCompleteStr", propertyNameCompleteStr)
-    print("property :", propertyNameCompleteStrDico)
-    #print('property : ',propertyName)
+    print("propertyNameCompleteStr", propertyNameCompleteStr)
+    print("propertyNameCompleteStrDico :", propertyNameCompleteStrDico)
+    print('property : ',propertyName)
     return (
         propertyName,
         propertyNameCompleteStrDico,
@@ -2097,12 +2122,29 @@ def main():
     if getIniCheckboxStateForAlias(config, ini_file):
         setAlias(False, True)
 
-    cellAlias = App.ActiveDocument.getObject(mySpreadSheetName).getAlias(cellCode)
+    #cellAlias = App.ActiveDocument.getObject(mySpreadSheetName).getAlias(cellCode)
+
 
     # create constraint
     # =================================
     # get value for constraint
     cellAlias = App.ActiveDocument.getObject(mySpreadSheetName).getAlias(cellCode)
+
+    # if a word in [rayon, radius...] in cellAlias : ask if the user want a *2 to have diameter.
+    print('cellAlias', cellAlias)
+    # radiusWord = ['radius', 'rayon'] # see at the begining of the code to add others languages
+    if any(word.lower() in cellAlias.lower() for word in radiusWord):
+        a = QtGui.QMessageBox.question(
+                    None,
+                    "",
+                    # "The word radius is present in the alias,"+
+                    # "would you like the formula to multiply the value by 2 to obtain a diameter? ",
+                    messages[language]["radiusDetecxted"],
+                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
+                    QtGui.QMessageBox.No,
+                )
+        if a == QtGui.QMessageBox.Yes:
+            cellAlias=cellAlias+'*2'
 
     if cellAlias == None:
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellCode
@@ -2120,17 +2162,19 @@ def main():
             print("Boolean and multi values are not editable by the macro."+
                   "It will be possible in a next version")
             return
+        '''
         if objectType not in autorisedTypeForChangeproperty:
             print('The object',objectName, 'is not part of the list of objects allowed for property changes.'
                   +' You can adjust it easily in the macro code')
             return
+        '''
         if propertyName not in autorisedpropertyToChange:
-            print('Property', propertyName, 'not autorised. You can add it in macro code')
+            print('Property', propertyName,
+                    'not autorised. Ask to add it')
             return
         if not (property_editable and property_enabled):
             print(propertyName, 'property not editable in this context. Make it editable beforehand.')
             return
-
         try:
             myPadOrPocket.setExpression(propertyNameCompleteStrDico, cellExpression)
         except:
@@ -2226,13 +2270,9 @@ def main():
     activateSketchEditingWindow()
     Gui.Selection.clearSelection()
 
-    # if Gui.ActiveDocument.getInEdit() == Gui.ActiveDocument.Sketch:
-    # Gui.ActiveDocument.Sketch.doubleClicked()
-
     mySketch.recompute()
     # is ther constraintes conflicts?
     if sheckBoxConstraintConflicState:
-        # if App.activeDocument().isTouched(): # isTouched is not ok in Daily Freecad
         if "Invalid" in mySketch.State:
             a = QtGui.QMessageBox.question(
                 None,
