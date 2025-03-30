@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/22 13:09"  # YYYY/MM/DD
+__Date__ = "2025/03/30 15:00"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -128,7 +128,7 @@ def recomputeAll():
     App.ActiveDocument.recompute()
 
 
-def getLanguage():
+'''def getLanguage():
     # Dictionary of common languages
     common_languages = {
         "en": "English",
@@ -141,6 +141,33 @@ def getLanguage():
         system_language = locale.getlocale()[0][:2]
         if system_language in common_languages:
             lang = common_languages[system_language]
+    if lang not in common_languages.values():
+        lang = "English"
+    return lang
+'''
+
+def getLanguage():
+    # Dictionary of common languages
+    common_languages = {
+        "en": "English",
+        "fr": "French",
+    }
+    lang = App.ParamGet("User parameter:BaseApp/Preferences/General").GetString(
+        "Language"
+    )
+    if not lang:  # if App.ParamGet found nothing
+        try:
+            system_locale = locale.getlocale()
+            if system_locale and system_locale[0]:
+                system_language = system_locale[0][:2]
+                if system_language in common_languages:
+                    lang = common_languages[system_language]
+            else:
+                # Fallback if locale returns None or empty
+                lang = "English"
+        except (TypeError, IndexError):
+            # Handle any exceptions by defaulting to English
+            lang = "English"
     if lang not in common_languages.values():
         lang = "English"
     return lang
