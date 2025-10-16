@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/03/30 15:00"  # YYYY/MM/DD
+__Date__ = "2025/10/16 09:00"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -99,6 +99,7 @@ autorisedpropertyToChange = [
     'TaperedAngle'
     'ThreadDepth'
     'CustomThreadClearance',
+    'Occurrences',
 ]
 
 
@@ -2169,8 +2170,6 @@ def main():
     if getIniCheckboxStateForAlias(config, ini_file):
         setAlias(False, True)
 
-    #cellAlias = App.ActiveDocument.getObject(mySpreadSheetName).getAlias(cellCode)
-
 
     # create constraint
     # =================================
@@ -2183,7 +2182,7 @@ def main():
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellCode
     else:
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
-        # to add a forula via key word dicoformula. Means there is a formula after this word
+        # to add a formula via key word dicoformula. Means there is a formula after this word
         if formulaSeparator in cellExpression:
             formula=cellExpression
             formula = formula.split(formulaSeparator, 1)[1]
@@ -2194,6 +2193,23 @@ def main():
                 cellExpression=cellExpression + formula
             else:
                 print('There is an error in the formula',formula)
+        else :
+	      # If cellExpression starts with something like "radius", it is multiplied by 2 (to convert radius to diameter)
+          wordsForArray = ["rayon", "radius"]
+          expression = cellExpression.strip().lower()
+          # Get the final segment after the last period (e.g. <<datas>>.rayonaaa → rayonaaa)
+          suffix = expression.split(".")[-1]
+          if any(suffix.startswith(word) for word in wordsForArray):
+            cellExpression = f"({cellExpression}) * 2"
+
+
+
+
+
+
+
+
+
 
 
     if myPadOrPocket != None:
