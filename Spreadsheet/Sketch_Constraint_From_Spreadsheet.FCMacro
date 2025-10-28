@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/10/22 08:00"  # YYYY/MM/DD
+__Date__ = "2025/10/27 15:00"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -200,12 +200,15 @@ messages = {
         + "\n et voulez-vous que la cellule contienne la valeur de la contrainte ?"
         + "\n ATTENTION, vérifiez que vous n'allez pas créer une référence circulaire."
         + "\n\nIl se peut que PENDING apparaisse dans la cellule. Pour l'instant, "
-        + "je ne recommande pas son utilisation car FreeCad manage mal les href.",
+        + "je ne recommande pas son utilisation car FreeCad manage mal les href. "
+        + "\n Pour retirer le pending lancer un recalcul sur le spreadsheet ou sur la cellule ou "
+        + "tapez Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python",
         "referenceWithName": "La contrainte que vous avez sélectionnée est une contrainte de type référence."
         + "\n\nVoulez-vous que la cellule contienne la valeur de la contrainte ?"
         + "\n ATTENTION, vérifiez que vous n'allez pas créer une référence circulaire."
         + "\n\nIl se peut que PENDING apparaisse dans la cellule. "
-        + "En ce cas, tapez Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python "
+        + "\n Pour retirer le pending lancer un recalcul sur le spreadsheet ou sur la cellule ou "
+        + "tapez Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python. "
         + "je ne recommande pas son utilisation car FreeCad manage mal les href.",
         "ClickOnACellBefore": "Cliquez dans une cellule avec une valeur numérique avant de lancer la macro.",
         "NoObjectSelected": "Vous n'avez pas sélectionné d'objets dans le sketch actif."
@@ -229,6 +232,11 @@ messages = {
         + "\nDonne la possibilité d'annuler la contrainte ",
         "getConstraintTypeWindowTitle": "Choix du type de contrainte",
         "getConstraintTypeCheckboxAlias": "Textes pour alias automatiques dans cette cellule et en dessous :",
+        "getConstraintTypeRadioGroupTitle": "Diamètre dans tableur donne un rayon dans le sketch (valeur divisée par 2)",
+        "getConstraintTypeRadioGroupTooltip": "À utiliser, par exemple, lorsque vous connaissez la valeur du diamètre, "
+        + "\nmais que le sketch nécessite une contrainte sur le rayon. Utile notamment pour les fonctions de révolution.",
+        "getConstraintTypeRadioRadius": "Oui (/ 2)",
+        "getConstraintTypeRadioDiameter":"Non (inchangé)",
 
     },
     "English": {
@@ -262,11 +270,15 @@ messages = {
         + "\n and do you want the cell to contain the value of the constraint?"
         + "\n WARNING, check that you are not going to create a circular reference."
         + "\n\nPENDING may appear in the cell. This will appear too often. \nFor now, "
-        + "I do not recommend its use..",
+        + "I do not recommend its use.."
+        + "\n To remove the pending status, trigger a recalculation on the spreadsheet or on the cell or "
+        + "type Gui.ActiveDocument.ActiveView.getSheet().recompute(True) in the python console.",
         "referenceWithName": "The constraint you have selected is a reference type constraint."
         + "\n\nDo you want the cell to contain the value of the constraint?"
         + "\n WARNING, check that you are not going to create a circular reference."
-        + "\n\nPENDING may appear in the cell. in this case, type Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python in the python console.",
+        + "\n\nPENDING may appear in the cell.         "
+        + "\n To remove the pending status, trigger a recalculation on the spreadsheet or on the cell or " 
+        + "type Gui.ActiveDocument.ActiveView.getSheet().recompute(True) in the python console.",
         "ClickOnACellBefore": "Click on a cell with a numeric value before runing the macro",
         "NoObjectSelected": "You have not selected any objects in the active sketch."
         + "\nDoes this mean you want to automatically create aliases to the right of the selected cells"
@@ -288,9 +300,11 @@ messages = {
         "getConstraintTypeCheckboxConflicToolTip": "Warning in case of constraint conflict. Gives the possibility to cancel the constraint.",
         "getConstraintTypeWindowTitle": "Choose a constraint type",
         "getConstraintTypeCheckboxAlias": "Texts for Automatic alias labels for this cell, and under :",
-
-
-
+        "getConstraintTypeRadioGroupTitle": "Diameter in spreadsheet results in radius in sketch (value divided by 2)",
+        "getConstraintTypeRadioGroupTooltip": "This option is useful when the known value is a diameter, but the sketch requires a "
+        + "\nradius constraint—particularly relevant for revolved geometries.",
+        "getConstraintTypeRadioRadius": "Yes (/ 2)",
+        "getConstraintTypeRadioDiameter": "No (unchanged)",
 
     },
 }
@@ -376,7 +390,6 @@ def selectedpropertyInTreeView():
     # index.data(QtCore.Qt.DisplayRole) and the "name property"
     # for setExpression(propertyNameCompleteStrDico, cellExpression)
     dicoName = {
-
         "Placement.Position.x": "Placement.Base.x",
         "Placement.Position.y": "Placement.Base.y",
         "Placement.Position.z": "Placement.Base.z",
@@ -402,10 +415,8 @@ def selectedpropertyInTreeView():
         "attachementAxisZ": "AttachmentOffset.Rotation.Axis.z",
         "InternalGeometry.MakeInternals": "MakeInternals",
         "Sketch.ArcFitTolerance": "ArcFitTolerance",
-        "Limits.LengthMin":"LengthMin",
-        "Limits.LengthMax" :"LengthMax",
-        "Limits.AngleMin": "AngleMin",
-        "Limits.AngleMax": "AngleMax",
+
+
     }
     parentToRemove = [
         "Attachment",
@@ -418,6 +429,9 @@ def selectedpropertyInTreeView():
         "Prism",
         "Pocket",
         'Hole',
+        "Limits",
+        "Side1",
+        "Side2",
     ]
     try:
         objectName = Gui.Selection.getSelection()[0].Name
@@ -652,7 +666,7 @@ class Dialog(QtGui.QDialog):
 
         self.textboxBodyName = QtGui.QLineEdit(getIniName("Body", config, ini_file))
         self.textboxBodyName.setFixedWidth(200)  # size
-        # self.textboxBodyName.setToolTip('Name for the Body')
+
         self.textboxBodyName.setToolTip(
             messages[language]["DialogTextboxBodyNameToolTip"]
         )
@@ -1515,7 +1529,25 @@ class getConstraintType(QtGui.QDialog):
         restOfLayoutGroupBox.setLayout(restOfLayout)
         layout.addWidget(restOfLayoutGroupBox)
 
-        # macroDirectory = App.ParamGet("User parameter:BaseApp/Preferences/Macro").GetString("MacroPath") + "\\"
+
+        # Groupe de sélection Rayon / Diamètre
+        self.radioGroupBox = QtGui.QGroupBox(messages[language]["getConstraintTypeRadioGroupTitle"])
+        self.radioGroupBox.setToolTip(messages[language]["getConstraintTypeRadioGroupTooltip"])
+        self.radioButtonRadius = QtGui.QRadioButton(messages[language]["getConstraintTypeRadioRadius"])
+        self.radioButtonDiameter = QtGui.QRadioButton(messages[language]["getConstraintTypeRadioDiameter"])
+
+        # Valeur par défaut : Diameter
+        self.radioButtonDiameter.setChecked(True)
+
+        # Layout horizontal pour les boutons radio
+        radioLayout = QtGui.QHBoxLayout()
+        radioLayout.addWidget(self.radioButtonRadius)
+        radioLayout.addWidget(self.radioButtonDiameter)
+        self.radioGroupBox.setLayout(radioLayout)
+
+        layout.addWidget(self.radioGroupBox)
+
+
 
         global macroDirectory
         try:
@@ -1584,6 +1616,10 @@ class getConstraintType(QtGui.QDialog):
 
     def getCheckBoxState(self):
         return self.checkboxConflic.isChecked()
+        
+    def getRadiusOrDiameter(self):
+        return "Radius" if self.radioButtonRadius.isChecked() else "Diameter"
+     
 
 
 # =======================================================
@@ -1888,8 +1924,10 @@ def getGuiObjsSelect(type=""):
 # Main proceddure
 ##########################################
 def main():
+    form = None 
     sheckBoxConstraintConflicState = False
     indexConstraint = -1
+    isRadius=False #########################################################"
 
     if addTheObjects():  # Creation of missing objects if wanted
         return
@@ -1941,6 +1979,7 @@ def main():
         if not isSketchActif():
             myPadOrPocket = sels[0].Object  # object owner of property
             typeIdGeometry1 = sels[0].Object.TypeId
+            print('myPadOrPocket 1982 ',myPadOrPocket)
     except:
         pass
 
@@ -2132,6 +2171,9 @@ def main():
         # conflict : is the checkboxSheced?
         sheckBoxConstraintConflicState = form.getCheckBoxState()
 
+
+
+
         if typeInSubElementName1 in ["V_Axis"] or typeInSubElementName2 in ["V_Axis"]:
             myConstraint = "DistanceX"
         elif typeInSubElementName1 in ["H_Axis"] or typeInSubElementName2 in ["H_Axis"]:
@@ -2170,8 +2212,6 @@ def main():
     # get value for constraint
     cellAlias = App.ActiveDocument.getObject(mySpreadSheetName).getAlias(cellCode)
 
-
-
     if cellAlias == None:
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellCode
     else:
@@ -2194,35 +2234,29 @@ def main():
           # Get the final segment after the last period (e.g. <<datas>>.rayonaaa → rayonaaa)
           suffix = expression.split(".")[-1]
           if any(suffix.startswith(word) for word in wordsForArray):
-            cellExpression = f"({cellExpression}) * 2"
-
-
-
-
-
-
-
-
-
-
+            isRadius=True 
+            print('isRadius vaut True')
+            print('typeIdGeometry1 ',typeIdGeometry1)
+              
+          if typeIdGeometry1 not in [
+           "Part::GeomCircle",
+           "Part::GeomArcOfCircle",
+           "Constraint"
+           ] and myPadOrPocket is None and form.getRadiusOrDiameter() == "Radius":
+             cellExpression = f"({cellExpression})/2"
 
     if myPadOrPocket != None:
         propertyName, propertyNameCompleteStrDico, propertyType, objectName, objectType, property_editable, property_enabled, = (
             propertyParentObjectAndpropertyNameInTreeView()
         )
-        if propertyNameCompleteStrDico == "":
+        if propertyNameCompleteStrDico == "" :
             print("Selection not allowed")
             return
         if propertyType in [bool, "setOf"]:
             print("Boolean and multi values are not editable by the macro."+
                   "It will be possible in a next version")
             return
-        '''
-        if objectType not in autorisedTypeForChangeproperty:
-            print('The object',objectName, 'is not part of the list of objects allowed for property changes.'
-                  +' You can adjust it easily in the macro code')
-            return
-        '''
+
         if propertyName not in autorisedpropertyToChange:
             print('Property', propertyName,
                     'not autorised. Ask to add it')
@@ -2242,9 +2276,14 @@ def main():
         "Part::GeomCircle",
         "Part::GeomArcOfCircle",
     ]:
-        indexConstraint = mySketch.addConstraint(
+        if isRadius :
+           indexConstraint = mySketch.addConstraint(
+            Sketcher.Constraint("Radius", indexObjectHavingPoint1, cellContents)
+           )
+        else:
+            indexConstraint = mySketch.addConstraint(
             Sketcher.Constraint("Diameter", indexObjectHavingPoint1, cellContents)
-        )
+           )       
 
     # create constraint for line or points
     elif typeIdGeometry1 != "Constraint":  # no selected constraint, just line or points
