@@ -24,7 +24,7 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2025/10/27 15:00"  # YYYY/MM/DD
+__Date__ = "2026/05/08 07:40"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
@@ -56,7 +56,7 @@ import FreeCADGui as Gui
 macroDirectory = App.getUserMacroDir(True)
 config = configparser.ConfigParser()
 ini_file = os.path.join(macroDirectory, "sketchConstraintFromSpreadsheet.ini")
-
+'''
 # -------------------------------------------------------------------------------
 # for security reason, only for this object, the macro can change the property
 # todo :
@@ -107,7 +107,7 @@ autorisedpropertyToChange = [
     'LengthMin',
     'LengthMax',
 ]
-
+'''
 
 
 #--------------------------------------------------------------------------------------------------------
@@ -432,6 +432,7 @@ def selectedpropertyInTreeView():
         "Limits",
         "Side1",
         "Side2",
+        "Link",
     ]
     try:
         objectName = Gui.Selection.getSelection()[0].Name
@@ -517,10 +518,8 @@ def selectedpropertyInTreeView():
     propertyParents_inverse = propertyParents[::-1]
 
     if len(propertyParents_inverse) > 0:
-        if propertyParents_inverse[0] in parentToRemove:
-            del propertyParents_inverse[
-                0
-            ]  # remove the top parents if he belong to parentToRemove
+        if propertyParents_inverse[0].lstrip() in parentToRemove: # on retire les blancs car Link en a un
+            del propertyParents_inverse[0]  # remove the top parents if he belong to parentToRemove
 
     if not None in propertyParents_inverse:
         propertyNameCompleteStr = (
@@ -2228,7 +2227,7 @@ def main():
             else:
                 print('There is an error in the formula',formula)
         else :
-	      # If cellExpression starts with something like "radius", it is multiplied by 2 (to convert radius to diameter)
+          # If cellExpression starts with something like "radius", it is multiplied by 2 (to convert radius to diameter)
           wordsForArray = ["rayon", "radius"]
           expression = cellExpression.strip().lower()
           # Get the final segment after the last period (e.g. <<datas>>.rayonaaa → rayonaaa)
@@ -2237,13 +2236,18 @@ def main():
             isRadius=True 
             print('isRadius vaut True')
             print('typeIdGeometry1 ',typeIdGeometry1)
-              
-          if typeIdGeometry1 not in [
-           "Part::GeomCircle",
-           "Part::GeomArcOfCircle",
-           "Constraint"
-           ] and myPadOrPocket is None and form.getRadiusOrDiameter() == "Radius":
-             cellExpression = f"({cellExpression})/2"
+
+          if (
+                  typeIdGeometry1 not in [
+              # "Part::GeomCircle",
+              # "Part::GeomArcOfCircle",
+              "Constraint",
+          ]
+                  and myPadOrPocket is None
+                  and form is not None
+                  and form.getRadiusOrDiameter() == "Radius"
+          ):
+              cellExpression = f"({cellExpression})/2"
 
     if myPadOrPocket != None:
         propertyName, propertyNameCompleteStrDico, propertyType, objectName, objectType, property_editable, property_enabled, = (
@@ -2256,11 +2260,12 @@ def main():
             print("Boolean and multi values are not editable by the macro."+
                   "It will be possible in a next version")
             return
-
+        '''
         if propertyName not in autorisedpropertyToChange:
             print('Property', propertyName,
                     'not autorised. Ask to add it')
             return
+        '''    
         if not (property_editable and property_enabled):
             print(propertyName, 'property not editable in this context. Make it editable beforehand.')
             return
