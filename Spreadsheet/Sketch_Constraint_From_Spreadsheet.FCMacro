@@ -24,9 +24,10 @@ __Name__ = "Sketch Constraint From Spreadsheet"
 __Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2026/05/08 07:40"  # YYYY/MM/DD
+__Date__ = "2026/06/03 14:54"  # YYYY/MM/DD
 __Version__ = __Date__
-__Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
+#__Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
+__Icon__ = "https://wiki.freecad.org/images/6/60/Sketch_Constraint_From_Spreadsheet.png"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
 __License__ = "Apache-2.0"
 
@@ -109,32 +110,30 @@ autorisedpropertyToChange = [
 ]
 '''
 
-
-#--------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------
 # Just after one of these word, you can have a formula for Alias
 # if your alias is 'radius_f__mul_2_plu_1' the expression will be something like
 #  <<datas>>.radius_f__mul_2_plu_1*2+1'
-#--------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------
 formulaSeparator = '_f_'
 dicoFormula = {
-    '_div_':'/',
-    '_mul_':'*',
-    '_plu_':'+',
-    '_mor_':'+',
-    '_les_':'-',
-    '_moi_':'-',
-    '_pg_':'(',
-    '_lp_':'(',
+    '_div_': '/',
+    '_mul_': '*',
+    '_plu_': '+',
+    '_mor_': '+',
+    '_les_': '-',
+    '_moi_': '-',
+    '_pg_': '(',
+    '_lp_': '(',
     '_pd_': ')',
     '_rp_': ')',
 }
+
 
 def recomputeAll():
     for obj in App.ActiveDocument.Objects:
         obj.touch()
     App.ActiveDocument.recompute()
-
-
 
 
 def getLanguage():
@@ -172,7 +171,7 @@ messages = {
     "French": {
         "DialogCheckbox1Document": "Document",
         "DialogToolTip": "Si coché, l'alias sera automatiquement créé lors de l'éxécution de la macro. "
-        + "\nLes Alias seront créés à droite des cellules avec texte. Les cellules avec texte sont celle ci et en dessous : ",
+                         + "\nLes Alias seront créés à droite des cellules avec texte. Les cellules avec texte sont celle ci et en dessous : ",
         "DialogCheckboxAlias": "Cellule de départ pour les textes des alias  :",
         "DialogCheckboxSpreadsheet": "Spreadsheets",
         "DialogTextboxSpreadsheetNameTolLip": "Nom pour les spreadsheet",
@@ -196,31 +195,31 @@ messages = {
         "XZPlane": "Plan XZ",
         "YZPlane": "Plan YZ",
         "referenceNoName": "La contrainte que vous avez sélectionnée est une contrainte de type référence."
-        + "\n Elle n'a pas de nom. \nVoulez-vous que la macro lui en donne "
-        + "\n et voulez-vous que la cellule contienne la valeur de la contrainte ?"
-        + "\n ATTENTION, vérifiez que vous n'allez pas créer une référence circulaire."
-        + "\n\nIl se peut que PENDING apparaisse dans la cellule. Pour l'instant, "
-        + "je ne recommande pas son utilisation car FreeCad manage mal les href. "
-        + "\n Pour retirer le pending lancer un recalcul sur le spreadsheet ou sur la cellule ou "
-        + "tapez Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python",
+                           + "\n Elle n'a pas de nom. \nVoulez-vous que la macro lui en donne "
+                           + "\n et voulez-vous que la cellule contienne la valeur de la contrainte ?"
+                           + "\n ATTENTION, vérifiez que vous n'allez pas créer une référence circulaire."
+                           + "\n\nIl se peut que PENDING apparaisse dans la cellule. Pour l'instant, "
+                           + "je ne recommande pas son utilisation car FreeCad manage mal les href. "
+                           + "\n Pour retirer le pending lancer un recalcul sur le spreadsheet ou sur la cellule ou "
+                           + "tapez Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python",
         "referenceWithName": "La contrainte que vous avez sélectionnée est une contrainte de type référence."
-        + "\n\nVoulez-vous que la cellule contienne la valeur de la contrainte ?"
-        + "\n ATTENTION, vérifiez que vous n'allez pas créer une référence circulaire."
-        + "\n\nIl se peut que PENDING apparaisse dans la cellule. "
-        + "\n Pour retirer le pending lancer un recalcul sur le spreadsheet ou sur la cellule ou "
-        + "tapez Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python. "
-        + "je ne recommande pas son utilisation car FreeCad manage mal les href.",
+                             + "\n\nVoulez-vous que la cellule contienne la valeur de la contrainte ?"
+                             + "\n ATTENTION, vérifiez que vous n'allez pas créer une référence circulaire."
+                             + "\n\nIl se peut que PENDING apparaisse dans la cellule. "
+                             + "\n Pour retirer le pending lancer un recalcul sur le spreadsheet ou sur la cellule ou "
+                             + "tapez Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python. "
+                             + "je ne recommande pas son utilisation car FreeCad manage mal les href.",
         "ClickOnACellBefore": "Cliquez dans une cellule avec une valeur numérique avant de lancer la macro.",
         "NoObjectSelected": "Vous n'avez pas sélectionné d'objets dans le sketch actif."
-        + "\nCela veut il dire que vous souhaitez créer automatiquement des alias à droite des cellules sélectionnées"
-        + "en utilisant le texte de ces cellules sélectionnées."
-        + "\n\nA moins que vous souhaitiez modofier directement une propriété dans l'arbre. "
-        + " \n En ce cas sortez du mode d'édition du Sketch.",
+                            + "\nCela veut il dire que vous souhaitez créer automatiquement des alias à droite des cellules sélectionnées"
+                            + "en utilisant le texte de ces cellules sélectionnées."
+                            + "\n\nA moins que vous souhaitiez modofier directement une propriété dans l'arbre. "
+                            + " \n En ce cas sortez du mode d'édition du Sketch.",
         "NoActiveSpreadsheet": "Pas de cellule sélectionnée dans un spreadsheet actif."
-        + "\nSélectionnez un objet dans un sketch, puis sélectionnez une cellule dans un spreadsheet.",
+                               + "\nSélectionnez un objet dans un sketch, puis sélectionnez une cellule dans un spreadsheet.",
         "ConstarintConflicDetected": "Détection de conflit dans les contraintes. Annulation de la création de la conrainte ?",
         "getConstraintTypeAliasToolTip": "Si coché, l'alias sera automatiquement créé lors de l'éxécution de la macro."
-        + "\nLes Alias seront créés à droite des cellules avec texte. Les cellules avec texte sont celle ci et en dessous : ",
+                                         + "\nLes Alias seront créés à droite des cellules avec texte. Les cellules avec texte sont celle ci et en dessous : ",
         "getConstraintTypeOption1ButtonSetText": "Contrainte &horizontale ",
         "getConstraintTypeOption2ButtonSetText": "Contrainte &verticale",
         "getConstraintTypeOption3ButtonSetText": "Contrainte &alignée",
@@ -229,20 +228,20 @@ messages = {
         "getConstraintTypeOption3ButtonSetTextToolTip": "Contrainte alignée",
         "getConstraintTypeCheckboxConflic": "Détecttion des conflits",
         "getConstraintTypeCheckboxConflicToolTip": "Avertissement en cas de conflit de contraintes."
-        + "\nDonne la possibilité d'annuler la contrainte ",
+                                                   + "\nDonne la possibilité d'annuler la contrainte ",
         "getConstraintTypeWindowTitle": "Choix du type de contrainte",
         "getConstraintTypeCheckboxAlias": "Textes pour alias automatiques dans cette cellule et en dessous :",
         "getConstraintTypeRadioGroupTitle": "Diamètre dans tableur donne un rayon dans le sketch (valeur divisée par 2)",
         "getConstraintTypeRadioGroupTooltip": "À utiliser, par exemple, lorsque vous connaissez la valeur du diamètre, "
-        + "\nmais que le sketch nécessite une contrainte sur le rayon. Utile notamment pour les fonctions de révolution.",
+                                              + "\nmais que le sketch nécessite une contrainte sur le rayon. Utile notamment pour les fonctions de révolution.",
         "getConstraintTypeRadioRadius": "Oui (/ 2)",
-        "getConstraintTypeRadioDiameter":"Non (inchangé)",
+        "getConstraintTypeRadioDiameter": "Non (inchangé)",
 
     },
     "English": {
         "DialogCheckbox1Document": "Document",
         "DialogToolTip": "If checked, alias will automatically be created during each macro execution. "
-        + "\nAlias will be created at the right of cells with text. Cells with text is this one and cells and under : ",
+                         + "\nAlias will be created at the right of cells with text. Cells with text is this one and cells and under : ",
         "DialogCheckboxAlias": "Starting cell for alias texts  :",
         "DialogCheckboxSpreadsheet": "Spreadsheets",
         "DialogTextboxSpreadsheetNameTolLip": "Name for the spreadsheet",
@@ -266,30 +265,30 @@ messages = {
         "XZPlane": "XZ Plane",
         "YZPlane": "YZ Plane",
         "referenceNoName": "The constraint you have selected is a reference type constraint."
-        + "\n It does not have a name. \nDo you want the macro to give it one "
-        + "\n and do you want the cell to contain the value of the constraint?"
-        + "\n WARNING, check that you are not going to create a circular reference."
-        + "\n\nPENDING may appear in the cell. This will appear too often. \nFor now, "
-        + "I do not recommend its use.."
-        + "\n To remove the pending status, trigger a recalculation on the spreadsheet or on the cell or "
-        + "type Gui.ActiveDocument.ActiveView.getSheet().recompute(True) in the python console.",
+                           + "\n It does not have a name. \nDo you want the macro to give it one "
+                           + "\n and do you want the cell to contain the value of the constraint?"
+                           + "\n WARNING, check that you are not going to create a circular reference."
+                           + "\n\nPENDING may appear in the cell. This will appear too often. \nFor now, "
+                           + "I do not recommend its use.."
+                           + "\n To remove the pending status, trigger a recalculation on the spreadsheet or on the cell or "
+                           + "type Gui.ActiveDocument.ActiveView.getSheet().recompute(True) in the python console.",
         "referenceWithName": "The constraint you have selected is a reference type constraint."
-        + "\n\nDo you want the cell to contain the value of the constraint?"
-        + "\n WARNING, check that you are not going to create a circular reference."
-        + "\n\nPENDING may appear in the cell.         "
-        + "\n To remove the pending status, trigger a recalculation on the spreadsheet or on the cell or " 
-        + "type Gui.ActiveDocument.ActiveView.getSheet().recompute(True) in the python console.",
+                             + "\n\nDo you want the cell to contain the value of the constraint?"
+                             + "\n WARNING, check that you are not going to create a circular reference."
+                             + "\n\nPENDING may appear in the cell.         "
+                             + "\n To remove the pending status, trigger a recalculation on the spreadsheet or on the cell or "
+                             + "type Gui.ActiveDocument.ActiveView.getSheet().recompute(True) in the python console.",
         "ClickOnACellBefore": "Click on a cell with a numeric value before runing the macro",
         "NoObjectSelected": "You have not selected any objects in the active sketch."
-        + "\nDoes this mean you want to automatically create aliases to the right of the selected cells"
-        + "using the text of these selected cells?"
-        + "\n\nUnless you wish to directly modify a property in the tree."
-        + "\nIn that case, exit the Sketch editing mode.",
+                            + "\nDoes this mean you want to automatically create aliases to the right of the selected cells"
+                            + "using the text of these selected cells?"
+                            + "\n\nUnless you wish to directly modify a property in the tree."
+                            + "\nIn that case, exit the Sketch editing mode.",
         "NoActiveSpreadsheet": "No active spreadsheet with selected cells."
-        + "\nSelect objects in sketch, and then select a cell in spreadsheet.",
+                               + "\nSelect objects in sketch, and then select a cell in spreadsheet.",
         "ConstarintConflicDetected": "Constraints conflic detected. Cancel constraint creation?",
         "getConstraintTypeAliasToolTip": "If checked, alias will automatically be created during each macro execution."
-        + "\nAlias will be built for the right cells from the text in this cell and under.",
+                                         + "\nAlias will be built for the right cells from the text in this cell and under.",
         "getConstraintTypeOption1ButtonSetText": "Constrain &Horzontal Dist",
         "getConstraintTypeOption2ButtonSetText": "Constrain &Vertical Dist",
         "getConstraintTypeOption3ButtonSetText": "Constrain &Distance",
@@ -302,7 +301,7 @@ messages = {
         "getConstraintTypeCheckboxAlias": "Texts for Automatic alias labels for this cell, and under :",
         "getConstraintTypeRadioGroupTitle": "Diameter in spreadsheet results in radius in sketch (value divided by 2)",
         "getConstraintTypeRadioGroupTooltip": "This option is useful when the known value is a diameter, but the sketch requires a "
-        + "\nradius constraint—particularly relevant for revolved geometries.",
+                                              + "\nradius constraint—particularly relevant for revolved geometries.",
         "getConstraintTypeRadioRadius": "Yes (/ 2)",
         "getConstraintTypeRadioDiameter": "No (unchanged)",
 
@@ -372,13 +371,14 @@ def isSketchActif():
 
 
 # To know if an freecad expression is valid
-#--------------------------------------------
+# --------------------------------------------
 def validate_expression(expression):
     try:
         result = eval(expression)
         return True  # The expression is valid
     except Exception as e:
         return False  # The expression is invalid
+
 
 # ------------------------------------------------
 # get selected property in treeView
@@ -404,8 +404,8 @@ def selectedpropertyInTreeView():
         "AttachmentOffset.Axis.z": ".AttachmentOffset.Rotation.Axis.z",
         "AttachmentOffset.Angle": ".AttachmentOffset.Rotation.Angle",
         "AttachmentOffset.Axederotation.x": ".AttachmentOffset.Rotation.Axis.x",
-        "AttachmentOffset.Axederotation.y":".AttachmentOffset.Rotation.Axis.y",
-        "AttachmentOffset.Axederotation.z":".AttachmentOffset.Rotation.Axis.z",
+        "AttachmentOffset.Axederotation.y": ".AttachmentOffset.Rotation.Axis.y",
+        "AttachmentOffset.Axederotation.z": ".AttachmentOffset.Rotation.Axis.z",
         "Placement.Axis.x": "Placement.Rotation.Axis.x",
         "Placement.Axis.y": "Placement.Rotation.Axis.y",
         "Placement.Axis.z": "Placement.Rotation.Axis.z",
@@ -415,7 +415,6 @@ def selectedpropertyInTreeView():
         "attachementAxisZ": "AttachmentOffset.Rotation.Axis.z",
         "InternalGeometry.MakeInternals": "MakeInternals",
         "Sketch.ArcFitTolerance": "ArcFitTolerance",
-
 
     }
     parentToRemove = [
@@ -446,10 +445,10 @@ def selectedpropertyInTreeView():
 
     def extract_value_expression(string):
         if (
-            not type(string) == str
-            or string.count("(") == 0
-            or string.count(")") == 0
-            or string.count("[") > 0
+                not type(string) == str
+                or string.count("(") == 0
+                or string.count(")") == 0
+                or string.count("[") > 0
         ):
             return string, ""
         string = str(string)
@@ -479,9 +478,9 @@ def selectedpropertyInTreeView():
         for index in tree.selectedIndexes():
             n = n + 1
             if (
-                isinstance(index, QtCore.QModelIndex)
-                and index.isValid()
-                and index.model() is not None
+                    isinstance(index, QtCore.QModelIndex)
+                    and index.isValid()
+                    and index.model() is not None
             ):
                 data = index.data(QtCore.Qt.DisplayRole)  # data is an str or boolean
                 if tree.objectName() == "propertyEditorData":  # t == 2:
@@ -518,12 +517,12 @@ def selectedpropertyInTreeView():
     propertyParents_inverse = propertyParents[::-1]
 
     if len(propertyParents_inverse) > 0:
-        if propertyParents_inverse[0].lstrip() in parentToRemove: # on retire les blancs car Link en a un
+        if propertyParents_inverse[0].lstrip() in parentToRemove:  # on retire les blancs car Link en a un
             del propertyParents_inverse[0]  # remove the top parents if he belong to parentToRemove
 
     if not None in propertyParents_inverse:
         propertyNameCompleteStr = (
-            ".".join(propertyParents_inverse) + "." + propertyName
+                ".".join(propertyParents_inverse) + "." + propertyName
         )
     else:
         print("None found. Selection not allowed.")
@@ -538,7 +537,7 @@ def selectedpropertyInTreeView():
 
     print("propertyNameCompleteStr", propertyNameCompleteStr)
     print("propertyNameCompleteStrDico :", propertyNameCompleteStrDico)
-    print('property : ',propertyName)
+    print('property : ', propertyName)
     return (
         propertyName,
         propertyNameCompleteStrDico,
@@ -593,14 +592,14 @@ def propertyParentObjectAndpropertyNameInTreeView():
 # ===============================================================================
 class Dialog(QtGui.QDialog):
     def __init__(
-        self,
-        documentState,
-        spreadsheetState,
-        textdocumentState,
-        bodyState,
-        sketchState,
-        text="",
-        parent=None,
+            self,
+            documentState,
+            spreadsheetState,
+            textdocumentState,
+            bodyState,
+            sketchState,
+            text="",
+            parent=None,
     ):
         super(Dialog, self).__init__(parent)
         # ToolTip=("If checked, alias will automatically be created during each macro execution. "+
@@ -900,10 +899,10 @@ class Dialog(QtGui.QDialog):
             text + " " + messages[language]["foundTrouve"]
             if state == "exist"
             else messages[language]["NoPasDe"]
-            + " "
-            + text
-            + " "
-            + messages[language]["foundCreateOne"]
+                 + " "
+                 + text
+                 + " "
+                 + messages[language]["foundCreateOne"]
         )
 
         checkbox.setEnabled(state != "off")
@@ -937,7 +936,7 @@ class Dialog(QtGui.QDialog):
 # Retrieve the results after displaying the object creation dialogue box.
 ###############################################################################
 def get_user_input(
-    documentState, spreadsheetState, textdocumentState, bodyState, sketchState, text=""
+        documentState, spreadsheetState, textdocumentState, bodyState, sketchState, text=""
 ):
     dialog = Dialog(
         documentState, spreadsheetState, textdocumentState, bodyState, sketchState, text
@@ -1028,8 +1027,8 @@ def addTheObjects():
             objCreate = True
 
         if (
-            firstObject("Spreadsheet::Sheet") == None
-            and user_input["checkboxSpreadsheet"]
+                firstObject("Spreadsheet::Sheet") == None
+                and user_input["checkboxSpreadsheet"]
         ):
             firstSpreadsheet = App.activeDocument().addObject(
                 "Spreadsheet::Sheet", user_input["textboxSpreadsheetName"]
@@ -1055,8 +1054,8 @@ def addTheObjects():
             objCreate = True
 
         if (
-            firstObject("App::TextDocument") == None
-            and user_input["checkboxTextDocument"]
+                firstObject("App::TextDocument") == None
+                and user_input["checkboxTextDocument"]
         ):
             firstTextdocument = App.activeDocument().addObject(
                 "App::TextDocument", user_input["textboxTextdocumentName"]
@@ -1072,8 +1071,8 @@ def addTheObjects():
         else:
             firstBody = firstObject("PartDesign::Body")
         if (
-            firstObject("Sketcher::SketchObject") == None
-            and user_input["checkboxSketch"]
+                firstObject("Sketcher::SketchObject") == None
+                and user_input["checkboxSketch"]
         ):
             if user_input["radiobutton1"]:
                 sketchSupport = "XY_Plane"
@@ -1357,7 +1356,7 @@ def setAlias(aliasCellsSelect, aliasAuto):
             activeCellContenu, separateur, nouveauCaract, majuscule
         )
         if (
-            changeTexteCellule
+                changeTexteCellule
         ):  # if the changeCellText parameter is set to True then we replace the text in the cell
             mySpreadsheet.set(cell, activeCellContenu)
         alias = activeCellContenu
@@ -1368,7 +1367,7 @@ def setAlias(aliasCellsSelect, aliasAuto):
                 )  # The alias is assigned to the right-hand neighbouring cell
                 changed = True
         except (
-            ValueError
+                ValueError
         ):  # If a "ValueError" is triggered (which happens when the alias is not valid)
             # The user is warned in the report
             App.Console.PrintWarning(
@@ -1528,7 +1527,6 @@ class getConstraintType(QtGui.QDialog):
         restOfLayoutGroupBox.setLayout(restOfLayout)
         layout.addWidget(restOfLayoutGroupBox)
 
-
         # Groupe de sélection Rayon / Diamètre
         self.radioGroupBox = QtGui.QGroupBox(messages[language]["getConstraintTypeRadioGroupTitle"])
         self.radioGroupBox.setToolTip(messages[language]["getConstraintTypeRadioGroupTooltip"])
@@ -1545,8 +1543,6 @@ class getConstraintType(QtGui.QDialog):
         self.radioGroupBox.setLayout(radioLayout)
 
         layout.addWidget(self.radioGroupBox)
-
-
 
         global macroDirectory
         try:
@@ -1615,10 +1611,9 @@ class getConstraintType(QtGui.QDialog):
 
     def getCheckBoxState(self):
         return self.checkboxConflic.isChecked()
-        
+
     def getRadiusOrDiameter(self):
         return "Radius" if self.radioButtonRadius.isChecked() else "Diameter"
-     
 
 
 # =======================================================
@@ -1639,7 +1634,7 @@ def activateSketchEditingWindow():
             else:
                 for child in tree.getChildren():
                     if recursiveSearchForNode(
-                        child, childName, maxLevel, currentLevel + 1
+                            child, childName, maxLevel, currentLevel + 1
                     ):
                         return True
         except:
@@ -1721,7 +1716,7 @@ def featuresObjSelected(mySketch, sel, numOrdreObjSelected, indexExtremite):
 
     # only one selected object
     if (
-        typeInSubElementName == "Edge" and len(sel.SubElementNames) == 1
+            typeInSubElementName == "Edge" and len(sel.SubElementNames) == 1
     ):  # selection is only one line
         indexObjectHavingPoint = numInName - 1
         indexExtremiteLine = indexExtremite
@@ -1799,7 +1794,7 @@ def featuresObjSelected(mySketch, sel, numOrdreObjSelected, indexExtremite):
 
     # We selected a vertex
     if (
-        typeInSubElementName == "Vertex"
+            typeInSubElementName == "Vertex"
     ):  # selection is 2 points. sel is a vertex (a point of a line) :
         indexObjectHavingPoint, indexExtremiteLine = sel.Object.getGeoVertexIndex(
             numInName - 1
@@ -1808,8 +1803,8 @@ def featuresObjSelected(mySketch, sel, numOrdreObjSelected, indexExtremite):
         if indexObjectHavingPoint >= 0:  # internal vertex
             typeIdGeometry = mySketch.Geometry[indexObjectHavingPoint].TypeId
             if (
-                mySketch.Geometry[indexObjectHavingPoint].TypeId
-                == "Part::GeomLineSegment"
+                    mySketch.Geometry[indexObjectHavingPoint].TypeId
+                    == "Part::GeomLineSegment"
             ):
                 if indexExtremiteLine == 1:
                     x = mySketch.Geometry[indexObjectHavingPoint].StartPoint.x
@@ -1832,7 +1827,7 @@ def featuresObjSelected(mySketch, sel, numOrdreObjSelected, indexExtremite):
             isInternalObject = False
             externalSketchName, externalGeometryName = tabExternalGeomery[
                 -indexObjectHavingPoint - 3
-            ]
+                ]
 
             iType, iNumStr = [
                 "".join(c)
@@ -1923,10 +1918,10 @@ def getGuiObjsSelect(type=""):
 # Main proceddure
 ##########################################
 def main():
-    form = None 
+    form = None
     sheckBoxConstraintConflicState = False
     indexConstraint = -1
-    isRadius=False #########################################################"
+    isRadius = False  #########################################################"
 
     if addTheObjects():  # Creation of missing objects if wanted
         return
@@ -1940,13 +1935,13 @@ def main():
 
             message = messages[language]["NoObjectSelected"]
             if (
-                QtGui.QMessageBox.warning(
-                    Gui.getMainWindow(),
-                    messages[language]["Warning"],
-                    message,
-                    QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
-                )
-                == QtGui.QMessageBox.Cancel
+                    QtGui.QMessageBox.warning(
+                        Gui.getMainWindow(),
+                        messages[language]["Warning"],
+                        message,
+                        QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
+                    )
+                    == QtGui.QMessageBox.Cancel
             ):
                 # if user don't want
                 return True
@@ -1978,7 +1973,7 @@ def main():
         if not isSketchActif():
             myPadOrPocket = sels[0].Object  # object owner of property
             typeIdGeometry1 = sels[0].Object.TypeId
-            print('myPadOrPocket 1982 ',myPadOrPocket)
+            print('myPadOrPocket 1982 ', myPadOrPocket)
     except:
         pass
 
@@ -2084,8 +2079,8 @@ def main():
             ) = featuresObjSelected(mySketch, sels[0], 0, 1)
 
             if (
-                typeInSubElementName1 == "Constraint"
-                and len(sels[0].SubElementNames) == 1
+                    typeInSubElementName1 == "Constraint"
+                    and len(sels[0].SubElementNames) == 1
             ):
                 indexConstraint = indexObjectHavingPoint1
             elif typeIdGeometry1 == "Part::GeomLineSegment":
@@ -2122,13 +2117,13 @@ def main():
             ) = featuresObjSelected(mySketch, sels[0], 1, 1)
 
             if (
-                typeInSubElementName1
-                not in ("Vertex", "V_Axis", "H_Axis", "RootPoint", "ExternalEdge")
-                or typeInSubElementName2
-                not in ("Vertex", "V_Axis", "H_Axis", "RootPoint", "ExternalEdge")
+                    typeInSubElementName1
+                    not in ("Vertex", "V_Axis", "H_Axis", "RootPoint", "ExternalEdge")
+                    or typeInSubElementName2
+                    not in ("Vertex", "V_Axis", "H_Axis", "RootPoint", "ExternalEdge")
             ) and not (
-                typeIdGeometry1 in ("Part::GeomCircle", "Part::GeomArcOfCircle")
-                and typeInSubElementName1 in ["Edge"]
+                    typeIdGeometry1 in ("Part::GeomCircle", "Part::GeomArcOfCircle")
+                    and typeInSubElementName1 in ["Edge"]
             ):
                 QtGui.QMessageBox.information(
                     None,
@@ -2143,17 +2138,17 @@ def main():
     # line or points have been selected have a look if we need to swap points
     # -------------------------------------
     if (
-        len(sels[0].SubElementNames) == 1
-        and typeIdGeometry1 in ["Part::GeomLineSegment"]
+            len(sels[0].SubElementNames) == 1
+            and typeIdGeometry1 in ["Part::GeomLineSegment"]
     ) or (
-        len(sels[0].SubElementNames) == 2
-        and typeIdGeometry1
-        in [
-            "Part::GeomLineSegment",
-            "Part::GeomCircle",
-            "Part::GeomArcOfCircle",
-            "Part::GeomPoint",
-        ]
+            len(sels[0].SubElementNames) == 2
+            and typeIdGeometry1
+            in [
+                "Part::GeomLineSegment",
+                "Part::GeomCircle",
+                "Part::GeomArcOfCircle",
+                "Part::GeomPoint",
+            ]
     ):
 
         # to give focus on the good button
@@ -2169,9 +2164,6 @@ def main():
         form = getConstraintType(buttonHavingFocus)
         # conflict : is the checkboxSheced?
         sheckBoxConstraintConflicState = form.getCheckBoxState()
-
-
-
 
         if typeInSubElementName1 in ["V_Axis"] or typeInSubElementName2 in ["V_Axis"]:
             myConstraint = "DistanceX"
@@ -2189,7 +2181,7 @@ def main():
             )  # 'DistanceX' or 'DistanceY' or 'Distance'
 
         if (myConstraint == "DistanceX" and x1 > x2) or (
-            myConstraint == "DistanceY" and y1 > y2
+                myConstraint == "DistanceY" and y1 > y2
         ):
             indexObjectHavingPoint1, indexObjectHavingPoint2 = (
                 indexObjectHavingPoint2,
@@ -2205,7 +2197,6 @@ def main():
     if getIniCheckboxStateForAlias(config, ini_file):
         setAlias(False, True)
 
-
     # create constraint
     # =================================
     # get value for constraint
@@ -2217,47 +2208,47 @@ def main():
         cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
         # to add a formula via key word dicoformula. Means there is a formula after this word
         if formulaSeparator in cellExpression:
-            formula=cellExpression
+            formula = cellExpression
             formula = formula.split(formulaSeparator, 1)[1]
-            formula=formula.lower()
+            formula = formula.lower()
             for word, remplacement in dicoFormula.items():
                 formula = formula.replace(word.lower(), remplacement)
-            if validate_expression('0'+formula):
-                cellExpression=cellExpression + formula
+            if validate_expression('0' + formula):
+                cellExpression = cellExpression + formula
             else:
-                print('There is an error in the formula',formula)
-        else :
-          # If cellExpression starts with something like "radius", it is multiplied by 2 (to convert radius to diameter)
-          wordsForArray = ["rayon", "radius"]
-          expression = cellExpression.strip().lower()
-          # Get the final segment after the last period (e.g. <<datas>>.rayonaaa → rayonaaa)
-          suffix = expression.split(".")[-1]
-          if any(suffix.startswith(word) for word in wordsForArray):
-            isRadius=True 
-            print('isRadius vaut True')
-            print('typeIdGeometry1 ',typeIdGeometry1)
+                print('There is an error in the formula', formula)
+        else:
+            # If cellExpression starts with something like "radius", it is multiplied by 2 (to convert radius to diameter)
+            wordsForArray = ["rayon", "radius"]
+            expression = cellExpression.strip().lower()
+            # Get the final segment after the last period (e.g. <<datas>>.rayonaaa → rayonaaa)
+            suffix = expression.split(".")[-1]
+            if any(suffix.startswith(word) for word in wordsForArray):
+                isRadius = True
+                print('isRadius vaut True')
+                print('typeIdGeometry1 ', typeIdGeometry1)
 
-          if (
-                  typeIdGeometry1 not in [
-              # "Part::GeomCircle",
-              # "Part::GeomArcOfCircle",
-              "Constraint",
-          ]
-                  and myPadOrPocket is None
-                  and form is not None
-                  and form.getRadiusOrDiameter() == "Radius"
-          ):
-              cellExpression = f"({cellExpression})/2"
+            if (
+                    typeIdGeometry1 not in [
+                # "Part::GeomCircle",
+                # "Part::GeomArcOfCircle",
+                "Constraint",
+            ]
+                    and myPadOrPocket is None
+                    and form is not None
+                    and form.getRadiusOrDiameter() == "Radius"
+            ):
+                cellExpression = f"({cellExpression})/2"
 
     if myPadOrPocket != None:
         propertyName, propertyNameCompleteStrDico, propertyType, objectName, objectType, property_editable, property_enabled, = (
             propertyParentObjectAndpropertyNameInTreeView()
         )
-        if propertyNameCompleteStrDico == "" :
+        if propertyNameCompleteStrDico == "":
             print("Selection not allowed")
             return
         if propertyType in [bool, "setOf"]:
-            print("Boolean and multi values are not editable by the macro."+
+            print("Boolean and multi values are not editable by the macro." +
                   "It will be possible in a next version")
             return
         '''
@@ -2265,7 +2256,7 @@ def main():
             print('Property', propertyName,
                     'not autorised. Ask to add it')
             return
-        '''    
+        '''
         if not (property_editable and property_enabled):
             print(propertyName, 'property not editable in this context. Make it editable beforehand.')
             return
@@ -2281,16 +2272,16 @@ def main():
         "Part::GeomCircle",
         "Part::GeomArcOfCircle",
     ]:
-        if isRadius :
-           indexConstraint = mySketch.addConstraint(
-            Sketcher.Constraint("Radius", indexObjectHavingPoint1, cellContents)
-           )
+        if isRadius:
+            indexConstraint = mySketch.addConstraint(
+                Sketcher.Constraint("Radius", indexObjectHavingPoint1, cellContents)
+            )
         else:
             indexConstraint = mySketch.addConstraint(
-            Sketcher.Constraint("Diameter", indexObjectHavingPoint1, cellContents)
-           )       
+                Sketcher.Constraint("Diameter", indexObjectHavingPoint1, cellContents)
+            )
 
-    # create constraint for line or points
+            # create constraint for line or points
     elif typeIdGeometry1 != "Constraint":  # no selected constraint, just line or points
         # create the constraint
         indexConstraint = mySketch.addConstraint(
@@ -2307,11 +2298,11 @@ def main():
     # if one external line or only one external circle or two external object
     # was selected : constraint is a reference
     if (
-        len(sels[0].SubElementNames) == 1
-        and not isInternalObject1
-        or len(sels[0].SubElementNames) == 2
-        and not isInternalObject1
-        and not isInternalObject2
+            len(sels[0].SubElementNames) == 1
+            and not isInternalObject1
+            or len(sels[0].SubElementNames) == 2
+            and not isInternalObject1
+            and not isInternalObject2
     ):
         mySketch.setDriving(
             indexConstraint, False
@@ -2336,13 +2327,13 @@ def main():
             message = messages[language]["referenceWithName"]
 
         if (
-            QtGui.QMessageBox.warning(
-                Gui.getMainWindow(),
-                messages[language]["Warning"],
-                message,
-                QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
-            )
-            == QtGui.QMessageBox.Ok
+                QtGui.QMessageBox.warning(
+                    Gui.getMainWindow(),
+                    messages[language]["Warning"],
+                    message,
+                    QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
+                )
+                == QtGui.QMessageBox.Ok
         ):
             # if user  want
             mySketch.renameConstraint(
