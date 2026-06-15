@@ -21,12 +21,17 @@
 # ========================================================================
 # ========================================================================
 __Name__ = "Sketch Constraint From Spreadsheet"
-__Comment__ = "A simple click on a spreadsheet cell, adds a length constraint to a line, circle, points... using a spreadsheet cell alias or address (ex. C2). The macro can create alias for you."
+__Comment__ = (
+    "Macro Sketch Constraint From Spreadsheet: "
+    "Quickly add a fully dynamic length constraint to a sketch element, using a "
+    "spreadsheet cell alias or address, or link spreadsheet values to "
+    "object properties. "
+    "The macro can also create aliases automatically."
+)
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
 __Date__ = "2026/06/03 14:54"  # YYYY/MM/DD
 __Version__ = __Date__
-#__Icon__ = "https://wiki.freecad.org/images/d/dc/Macro_Sketch_Constraint_From_Spreadsheet.svg"
 __Icon__ = "https://wiki.freecad.org/images/6/60/Sketch_Constraint_From_Spreadsheet.png"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
 __License__ = "Apache-2.0"
