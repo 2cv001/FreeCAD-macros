@@ -30,7 +30,7 @@ __Comment__ = (
 )
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
-__Date__ = "2026/06/03 14:54"  # YYYY/MM/DD
+__Date__ = "2026/06/15 11:00"  # YYYY/MM/DD
 __Version__ = __Date__
 __Icon__ = "https://wiki.freecad.org/images/6/60/Sketch_Constraint_From_Spreadsheet.png"
 __Wiki__ = "https://wiki.freecad.org/Macro_sketchConstraintFromSpreadsheet"
