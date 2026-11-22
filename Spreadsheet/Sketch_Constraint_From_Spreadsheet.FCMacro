@@ -44,7 +44,7 @@ from PySide.QtGui import QGuiApplication
 try:
     from PySide.QtCore import QRegularExpression as fcRegExp
     from PySide.QtGui import QRegularExpressionValidator as fcRegExpValidator
-except:
+except ImportError:  # Qt5 : no QRegularExpressionValidator
     from PySide.QtCore import QRegExp as fcRegExp
     from PySide.QtGui import QRegExpValidator as fcRegExpValidator
 
@@ -316,7 +316,7 @@ def isSketchActif():
     try:
         s = ActiveSketch
         return True
-    except:
+    except NameError:  # ActiveSketch exists only when a sketch is in edit mode
         return False
 
 
@@ -386,7 +386,7 @@ def selectedpropertyInTreeView():
     try:
         objectName = Gui.Selection.getSelection()[0].Name
         objectType = Gui.Selection.getSelection()[0].TypeId
-    except:
+    except IndexError:  # nothing selected
         objectName = ""
         objectType = ""
 
@@ -1190,7 +1190,7 @@ def setAlias(aliasCellsSelect, aliasAuto):
 
     try:
         mySpreadsheet = Gui.ActiveDocument.ActiveView.getSheet()
-    except:
+    except AttributeError:  # no document, or active view is not a spreadsheet
         QtGui.QMessageBox.warning(
             Gui.getMainWindow(),
             messages[language]["Warning"],
@@ -1472,7 +1472,7 @@ def activateSketchEditingWindow():
                             child, childName, maxLevel, currentLevel + 1
                     ):
                         return True
-        except:
+        except Exception:  # on purpose : best effort on any kind of scene graph node
             pass
         return False
 
@@ -1690,7 +1690,7 @@ def main():
 
     try:
         mySpreadsheet = Gui.ActiveDocument.ActiveView.getSheet()
-    except:
+    except AttributeError:  # no document, or active view is not a spreadsheet
 
         QtGui.QMessageBox.warning(
             Gui.getMainWindow(),
@@ -1709,12 +1709,12 @@ def main():
         if not isSketchActif():
             myPadOrPocket = sels[0].Object  # object owner of property
             typeIdGeometry1 = sels[0].Object.TypeId
-    except:
+    except IndexError:  # nothing selected
         pass
 
     try:
         mySketch = ActiveSketch
-    except:
+    except NameError:  # no sketch in edit mode
         if myPadOrPocket == None:
             QtGui.QMessageBox.information(
                 None,
@@ -1731,7 +1731,7 @@ def main():
         Gui.Selection.removeSelection(App.ActiveDocument.Name, sheet.Name)
     try:
         mySpreadsheet = Gui.ActiveDocument.ActiveView.getSheet()
-    except:
+    except AttributeError:  # no document, or active view is not a spreadsheet
         QtGui.QMessageBox.information(
             None,
             messages[language]["Warning"],
@@ -1754,7 +1754,7 @@ def main():
         if sels[0].Object.TypeId not in ["Part::Part2DObjectPython"]:  # ShapeString
             cellContents = mySpreadsheet.get(cellCode)
             cellContents = float(mySpreadsheet.get(cellCode))
-    except:
+    except ValueError:  # empty cell, text or formula error
         if isSketchActif():
             QtGui.QMessageBox.information(
                 None,
@@ -1992,8 +1992,8 @@ def main():
             return
         try:
             myPadOrPocket.setExpression(propertyNameCompleteStrDico, cellExpression)
-        except:
-            print("No property selected, or property not editable")
+        except Exception as e:  # on purpose : RuntimeError, ParserError, AttributeError...
+            print("No property selected, or property not editable :", e)
             return
         return
 
