@@ -2085,7 +2085,10 @@ def main():
                     and len(sels[0].SubElementNames) == 1
             ):
                 indexConstraint = indexObjectHavingPoint1
-            elif typeIdGeometry1 == "Part::GeomLineSegment":
+            elif (
+                    typeIdGeometry1 == "Part::GeomLineSegment"
+                    and typeInSubElementName1 in ("Edge", "ExternalEdge")
+            ):  # a whole line (a single vertex of a line is not enough)
                 (
                     typeIdGeometry2,
                     typeInSubElementName2,
@@ -2095,6 +2098,17 @@ def main():
                     y2,
                     isInternalObject2,
                 ) = featuresObjSelected(mySketch, sels[0], 0, 2)
+            elif typeIdGeometry1 not in ["Part::GeomCircle", "Part::GeomArcOfCircle"]:
+                # a single vertex (of a line, of an ellipse...), axis, ellipse... : no constraint possible
+                # (a circle, or only its center, is accepted on purpose: it gives a Diameter/Radius constraint)
+                QtGui.QMessageBox.information(
+                    None,
+                    messages[language]["Warning"],
+                    "This single object is not supported.\n"
+                    + "Select 1 line, 1 circle, 2 points or a constraint in a sketch before selecting a cell in the spreadsheet",
+                )
+                activateSketchEditingWindow()
+                return
 
         # two obj selected
         # ------------------------
