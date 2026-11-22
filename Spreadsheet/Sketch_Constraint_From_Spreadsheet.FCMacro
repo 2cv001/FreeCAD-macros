@@ -1330,14 +1330,16 @@ def setAlias(aliasCellsSelect, aliasAuto):
         sellStart = getIniCellForAlias(config, ini_file)
         columnTextAlias = get_column(sellStart)
         rowStartAlias = get_row(sellStart)
-        for i in range(rowStartAlias, 20000):
-            try:
-                activeCellContenu = mySpreadsheet.getContents(
-                    columnTextAlias + format(i)
-                )
+        try:
+            # only non-empty cells of the alias column, from the starting row
+            tabCells = sorted(
+                (c for c in mySpreadsheet.getNonEmptyCells()
+                 if get_column(c) == columnTextAlias and get_row(c) >= rowStartAlias),
+                key=get_row,
+            )
+        except AttributeError:  # old FreeCAD without getNonEmptyCells()
+            for i in range(rowStartAlias, 20000):
                 tabCells.append(columnTextAlias + format(i))
-            except:
-                break
     #    else :
     if aliasCellsSelect:
         # for item in sel_items: # The selected cells are scanned
