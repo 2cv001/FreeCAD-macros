@@ -1230,16 +1230,7 @@ def get_adjacent_cells(cell):
     above = letter + str(number - 1)
 
     # Calculate the cell above to the right
-    right = ""
-    for char in reversed(letter):
-        if char != "Z":
-            right = chr(ord(char) + 1) + right
-            break
-        else:
-            right = "A" + right
-    if not any(char != "Z" for char in letter):
-        right = "A" + right
-    right += str(number - 1)
+    right = nextCell(above)
 
     return above, right
 
