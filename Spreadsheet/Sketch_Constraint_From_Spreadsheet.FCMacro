@@ -62,59 +62,6 @@ import FreeCADGui as Gui
 macroDirectory = App.getUserMacroDir(True)
 config = configparser.ConfigParser()
 ini_file = os.path.join(macroDirectory, "sketchConstraintFromSpreadsheet.ini")
-'''
-# -------------------------------------------------------------------------------
-# for security reason, only for this object, the macro can change the property
-# todo :
-#  now code look if the property is enable and editable so autorisedTypeForChangeproperty will be removed
-# same for autorisedpropertyToChange
-
-autorisedpropertyToChange = [
-    'x',
-    'y',
-    'z',
-    'Angle',
-    'Angle1',
-    'Angle2',
-    'Angle3',
-    'Label',
-    'Length',
-    'Length2',
-    'Width',
-    'Height',
-    'ArcFitTolerance',
-    'Offset',
-    'TaperAngle',
-    'TaperAngle2',
-    'Diameter',
-    'Depth',
-    'Radius',
-    'Radius1',
-    'Radius2',
-    'Radius3',
-    'FirstAngle',
-    'SecondAngle',
-    'Size',
-    'Size2',
-    'ThreadDiameter',
-    'ThreadDirection',
-    'HoleCutDiameter',
-    'HoleCutDepth',
-    'HoleCutCountersinkAngle',
-    'DrillPointAngle',
-    'TaperedAngle'
-    'ThreadDepth'
-    'CustomThreadClearance',
-    'Occurrences',
-    'Distance',
-    'Distance2',
-    'AngleMin',
-    'AngleMax',
-    'LengthMin',
-    'LengthMax',
-]
-'''
-
 # --------------------------------------------------------------------------------------------------------
 # Just after one of these word, you can have a formula for Alias
 # if your alias is 'radius_f__mul_2_plu_1' the expression will be something like
@@ -467,11 +414,9 @@ def selectedpropertyInTreeView():
     propertyName = ""
     propertyNameCompleteStr = ""
     propertyParents = []
-    # tabProperty = []
     propertyTip = ""
     propertyValue = ""
     propertyExpression = ""
-    propertyName = ""
     propertyType = ""
     property_editable = False
     property_enabled = True
@@ -540,9 +485,6 @@ def selectedpropertyInTreeView():
     if propertyNameCompleteStrDico == "none":
         propertyNameCompleteStrDico = propertyNameCompleteStr
 
-    print("propertyNameCompleteStr", propertyNameCompleteStr)
-    print("propertyNameCompleteStrDico :", propertyNameCompleteStrDico)
-    print('property : ', propertyName)
     return (
         propertyName,
         propertyNameCompleteStrDico,
@@ -607,8 +549,6 @@ class Dialog(QtGui.QDialog):
             parent=None,
     ):
         super(Dialog, self).__init__(parent)
-        # ToolTip=("If checked, alias will automatically be created during each macro execution. "+
-        # "Alias will be created at the right of cells with text. Cells with text is this one or cells and under  :")
         ToolTip = messages[language]["DialogToolTip"]
         self.documentState = documentState
         self.textdocumentState = textdocumentState
@@ -618,32 +558,26 @@ class Dialog(QtGui.QDialog):
 
         self.text_widget = QtGui.QLabel(text)
 
-        # self.checkbox1Document = self.create_checkbox("Document", documentState)
         self.checkbox1Document = self.create_checkbox(
             messages[language]["DialogCheckbox1Document"], documentState
         )
 
-        # self.checkboxTextDocument = self.create_checkbox("Text document", textdocumentState)
         self.checkboxTextDocument = self.create_checkbox(
             messages[language]["DialogCheckboxTextDocument"], textdocumentState
         )
 
-        # self.checkboxSpreadsheet = self.create_checkbox("Spreadsheets", spreadsheetState)
         self.checkboxSpreadsheet = self.create_checkbox(
             messages[language]["DialogCheckboxSpreadsheet"], spreadsheetState
         )
 
-        # self.checkboxBody = self.create_checkbox("Body", bodyState)
         self.checkboxBody = self.create_checkbox(
             messages[language]["DialogcheckboxBody"], bodyState
         )
 
-        # self.checkboxSketch = self.create_checkbox("Sketch", sketchState)
         self.checkboxSketch = self.create_checkbox(
             messages[language]["DialogcheckboxSketch"], sketchState
         )
 
-        # self.checkboxAlias = QtGui.QCheckBox("Starting cell for alias texts  :")
         self.checkboxAlias = QtGui.QCheckBox(messages[language]["DialogCheckboxAlias"])
 
         self.checkboxAlias.setToolTip(ToolTip)
@@ -652,7 +586,6 @@ class Dialog(QtGui.QDialog):
             getIniName("Spreadsheet", config, ini_file)
         )
         self.textboxSpreadsheetName.setFixedWidth(200)  # size
-        # self.textboxSpreadsheetName.setToolTip('Name for the spreadsheet')
         self.textboxSpreadsheetName.setToolTip(
             messages[language]["DialogTextboxSpreadsheetNameTolLip"]
         )
@@ -662,7 +595,6 @@ class Dialog(QtGui.QDialog):
         )
         self.textboxTextdocumentName.setFixedWidth(200)  # size
 
-        # self.textboxTextdocumentName.setToolTip('Name for the Text Document')
         self.textboxTextdocumentName.setToolTip(
             messages[language]["DialogTextboxTextdocumentNameToolTip"]
         )
@@ -679,13 +611,11 @@ class Dialog(QtGui.QDialog):
             200
         )  # Set the maximum width of the text box
         self.textboxSketchName.setFixedWidth(200)  # size
-        self.textboxSketchName.setToolTip("Name for the Sketch")
         self.textboxSketchName.setToolTip(
             messages[language]["DialogTextboxSketchNameTolLip"]
         )
 
         layout_checkbox1Document = QtGui.QHBoxLayout()
-        # layout_checkbox1Document.addSpacing(20)
         if documentState != "no":
             layout_checkbox1Document.addWidget(self.checkbox1Document)
 
@@ -872,7 +802,6 @@ class Dialog(QtGui.QDialog):
         self.update_sketch_checkbox()
 
     def update_sketch_checkbox(self):
-        # checked = self.checkboxBody.isChecked()
         if self.sketchState == "exist":
             self.checkboxSketch.setEnabled(False)
             self.checkboxSketch.setChecked(True)
@@ -1086,8 +1015,6 @@ def addTheObjects():
             elif user_input["radiobutton3"]:
                 sketchSupport = "YZ_Plane"
 
-            # attachedTo=App.ActiveDocument.getObject('Body')
-            # attachedTo=firstObject('PartDesign::Body' )
             firstSketch = firstBody.newObject(
                 "Sketcher::SketchObject", user_input["textboxSketchName"]
             )
@@ -1116,7 +1043,6 @@ def addTheObjects():
             return createObjects(user_input)
         else:
             return True  # To stop macro because canceled
-        # App.ActiveDocument.recompute()
 
 
 # end of def addTheObjects()
@@ -1248,31 +1174,6 @@ def get_row(cell):
     return int(row)
 
 
-def get_next_column(column):
-    column = list(column)
-
-    for i in range(len(column) - 1, -1, -1):
-        if column[i] != "Z":
-            column[i] = chr(ord(column[i]) + 1)
-            break
-        else:
-            column[i] = "A" if i != 0 else "AA"
-    return "".join(column)
-
-
-def get_previous_column(column):
-    column = list(column)
-
-    for i in range(len(column) - 1, -1, -1):
-        if column[i] != "A":
-            column[i] = chr(ord(column[i]) - 1)
-            break
-        else:
-            column[i] = "Z" if i != 0 else ""
-
-    return "".join(column)
-
-
 def nextCell(cell):
     colonne, ligne = re.match(r"([A-Z]+)([0-9]+)", cell).groups()
     num = 0
@@ -1294,38 +1195,21 @@ def setAlias(aliasCellsSelect, aliasAuto):
     # so test if an object is selected :
     # result : False if macro can continue.
 
-    sels = Gui.Selection.getSelectionEx()
-
     try:
         mySpreadsheet = Gui.ActiveDocument.ActiveView.getSheet()
     except:
         QtGui.QMessageBox.warning(
             Gui.getMainWindow(),
             messages[language]["Warning"],
-            # "No active spreadsheet with selected cells."+
-            # "\nSelect objects in Sketch, \n"+
-            # "and then select a cell in spreadsheet")
             messages[language]["NoActiveSpreadsheet"],
         )
         return True
 
-    # aw = Gui.getMainWindow().centralWidget().activeSubWindow() # Store the active window
-    # view = Gui.activeView()
-
     # To get list of all selected cells
-    # sel_items = aw.widget().findChild(QtGui.QTableView).selectedIndexes()
     sel_items = Gui.activeView().selectedCells()
     # sel_items est un tableau sous la forme ['C4', 'C5', 'C6', 'C7', 'D6', 'D7', 'E4', 'E5', 'E6', 'E7']
 
-    ### We define a function that will return the cell identifier from its row (r) and column (c) numbers
-    ### Numbers start at 0 for the first row/column
-    ### Columns are correctly managed with a 2-letter identifier
-    cellName = lambda r, c: "{}{}{}".format(
-        chr(c // 26 + 64) if c // 26 > 0 else "", chr(c % 26 + 65), r + 1
-    )
-
     tabCells = []
-    #    if getIniCheckboxStateForAlias() :
     if aliasAuto:
         sellStart = getIniCellForAlias(config, ini_file)
         columnTextAlias = get_column(sellStart)
@@ -1340,10 +1224,7 @@ def setAlias(aliasCellsSelect, aliasAuto):
         except AttributeError:  # old FreeCAD without getNonEmptyCells()
             for i in range(rowStartAlias, 20000):
                 tabCells.append(columnTextAlias + format(i))
-    #    else :
     if aliasCellsSelect:
-        # for item in sel_items: # The selected cells are scanned
-        # tabCells.append( cellName(item.row(), item.column())) # We retrieve the cell ID in tabCells
         tabCells = sel_items
 
     changed = False
@@ -1375,8 +1256,6 @@ def setAlias(aliasCellsSelect, aliasAuto):
                 )
             )
 
-    # else :
-    # return True
     return False
 
 
@@ -1396,7 +1275,6 @@ class getConstraintType(QtGui.QDialog):
         self.initUI()
 
     def initUI(self):
-        # ToolTip="If checked, alias will automatically be created during each macro execution. Alias will be built for the right cell from the text in this cell."
         ToolTip = messages[language]["getConstraintTypeAliasToolTip"]
 
         # main layout
@@ -1414,28 +1292,22 @@ class getConstraintType(QtGui.QDialog):
             QtGui.QIcon(":/icons/constraints/Constraint_Length.svg"), ""
         )
 
-        # option1Button.setText("Lenght constrainte X")
         option1Button.setText(
             messages[language]["getConstraintTypeOption1ButtonSetText"]
         )
-        # option2Button.setText("Lenght constrainte Y")
         option2Button.setText(
             messages[language]["getConstraintTypeOption2ButtonSetText"]
         )
-        # option3Button.setText("Lenght constrainte")
         option3Button.setText(
             messages[language]["getConstraintTypeOption3ButtonSetText"]
         )
 
-        # option1Button.setToolTip("Lenght constrainte X")
         option1Button.setToolTip(
             messages[language]["getConstraintTypeOption1ButtonSetTextToolTip"]
         )
-        # option2Button.setToolTip("Lenght constrainte Y")
         option2Button.setToolTip(
             messages[language]["getConstraintTypeOption2ButtonSetTextToolTip"]
         )
-        # option3Button.setToolTip("Lenght constrainte")
         option3Button.setToolTip(
             messages[language]["getConstraintTypeOption3ButtonSetTextToolTip"]
         )
@@ -1470,7 +1342,6 @@ class getConstraintType(QtGui.QDialog):
         self.textboxAlias.setToolTip(ToolTip)
 
         self.setGeometry(250, 250, 0, 50)
-        # self.setWindowTitle("Choose a constraint type")
         self.setWindowTitle(messages[language]["getConstraintTypeWindowTitle"])
 
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
@@ -1490,7 +1361,6 @@ class getConstraintType(QtGui.QDialog):
             option3Button.setFocus()
 
         # Add checkbox
-        # self.checkboxConflic = QtGui.QCheckBox("Conflict detection")
         self.checkboxConflic = QtGui.QCheckBox(
             messages[language]["getConstraintTypeCheckboxConflic"]
         )
@@ -1501,7 +1371,6 @@ class getConstraintType(QtGui.QDialog):
         self.checkboxConflic.setChecked(True)
         self.checkboxConflic.clicked.connect(self.onOptionCheckBox)
 
-        # self.checkboxAlias = QtGui.QCheckBox("Automatic alias labels for this cell, and under :")
         self.checkboxAlias = QtGui.QCheckBox(
             messages[language]["getConstraintTypeCheckboxAlias"]
         )
@@ -1513,7 +1382,6 @@ class getConstraintType(QtGui.QDialog):
         self.textboxAlias.setValidator(validator)
         self.textboxAlias.textChanged.connect(self.onTextChanged)
 
-        # self.checkboxAlias.setChecked(True)
         self.checkboxAlias.setChecked(getIniCheckboxStateForAlias(config, ini_file))
         restOfLayoutGroupBox = QtGui.QGroupBox(
             messages[language]["getConstraintTypeCheckboxConflic"]
@@ -1586,7 +1454,6 @@ class getConstraintType(QtGui.QDialog):
         self.close()
 
     def onOptionCheckBox(self):
-        # macroDirectory = App.ParamGet("User parameter:BaseApp/Preferences/Macro").GetString("MacroPath") + "\\"
         global macroDirectory
         global config
         # Save checkbox state to file
@@ -1932,7 +1799,6 @@ def main():
 
     if not (len(sels) != 0 and len(sels[0].SubElementNames) != 0):
 
-        # if not (len(sels) != 0 and not isSketchActif()):
         if len(sels) == 0 or isSketchActif():
 
             message = messages[language]["NoObjectSelected"]
@@ -1957,9 +1823,6 @@ def main():
         QtGui.QMessageBox.warning(
             Gui.getMainWindow(),
             messages[language]["Warning"],
-            # "No active spreadsheet with selected cells."+
-            # "\nSelect objects in sketch, \n"+
-            # "and then select a cell in spreadsheet")
             messages[language]["NoActiveSpreadsheet"],
         )
 
@@ -1971,11 +1834,9 @@ def main():
 
     try:
         sels = Gui.Selection.getSelectionEx()
-        # print('sels[0].Object.TypeId',sels[0].Object.TypeId)
         if not isSketchActif():
             myPadOrPocket = sels[0].Object  # object owner of property
             typeIdGeometry1 = sels[0].Object.TypeId
-            print('myPadOrPocket 1982 ', myPadOrPocket)
     except:
         pass
 
@@ -2254,12 +2115,6 @@ def main():
             print("Boolean and multi values are not editable by the macro." +
                   "It will be possible in a next version")
             return
-        '''
-        if propertyName not in autorisedpropertyToChange:
-            print('Property', propertyName,
-                    'not autorised. Ask to add it')
-            return
-        '''
         if not (property_editable and property_enabled):
             print(propertyName, 'property not editable in this context. Make it editable beforehand.')
             return
@@ -2369,7 +2224,6 @@ def main():
             a = QtGui.QMessageBox.question(
                 None,
                 "",
-                # "Constraints conflic detected. Cancel constraint creation? ",
                 messages[language]["ConstarintConflicDetected"],
                 QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
                 QtGui.QMessageBox.No,
