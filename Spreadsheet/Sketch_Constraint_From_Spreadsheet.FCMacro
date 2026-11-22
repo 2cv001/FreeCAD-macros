@@ -58,10 +58,8 @@ import itertools
 import locale
 import FreeCADGui as Gui
 
-# macro directory (for ini file)
-macroDirectory = App.getUserMacroDir(True)
-config = configparser.ConfigParser()
-ini_file = os.path.join(macroDirectory, "sketchConstraintFromSpreadsheet.ini")
+# ini file (settings saved between executions), in the macro directory
+INI_FILE = os.path.join(App.getUserMacroDir(True), "sketchConstraintFromSpreadsheet.ini")
 # --------------------------------------------------------------------------------------------------------
 # Just after one of these word, you can have a formula for Alias
 # if your alias is 'radius_f__mul_2_plu_1' the expression will be something like
@@ -261,57 +259,57 @@ messages = {
 }
 
 
-# save objects names in ini file
-# typeObject : Spreadsheet, Body....
-def save_settings_Name(typeObject, objectName, config, ini_file):
-    config.read(ini_file)
-    if "SettingNames" not in config:
-        config.add_section("SettingNames")
-    config.set("SettingNames", typeObject, objectName)
-    with open(ini_file, "w") as configfile:
+# ===============================================================================
+# ini file : the only place where the ini file is read or written
+# sections : SettingNames, SettingsAlias, Conflict_detection
+# ===============================================================================
+def _iniRead():
+    config = configparser.ConfigParser()
+    config.read(INI_FILE)  # no error if the file does not exist yet
+    return config
+
+
+def iniGet(section, key, default):
+    return _iniRead().get(section, key, fallback=default)
+
+
+def iniGetBool(section, key, default):
+    try:
+        return _iniRead().getboolean(section, key, fallback=default)
+    except ValueError:  # value in the file is not a boolean
+        return default
+
+
+def iniSet(values):
+    # values : {section: {key: value, ...}, ...}  Other settings in the file are kept.
+    config = _iniRead()
+    for section, items in values.items():
+        if not config.has_section(section):
+            config.add_section(section)
+        for key, value in items.items():
+            config.set(section, key, str(value))
+    with open(INI_FILE, "w") as configfile:
         config.write(configfile)
 
 
-# Read name given by user for object choiseObject in ini file
-def getIniName(choiceObject, config, ini_file):
-    if os.path.exists(ini_file):
-        config.read(ini_file)
-        label = config.get("SettingNames", choiceObject, fallback=choiceObject)
-        return label
-    return choiceObject
+# Read name given by user for object choiceObject (Spreadsheet, Body...)
+def getIniName(choiceObject):
+    return iniGet("SettingNames", choiceObject, choiceObject)
 
 
-# Read cell for alias labelss value in ini file
-def getIniCellForAlias(config, ini_file):
-    if os.path.exists(ini_file):
-        config.read(ini_file)
-        cell = config.get("SettingsAlias", "textboxAlias", fallback="A3")
-        if cell == "":
-            cell = "A3"
-        return cell
-    else:
-        return "A3"
+# Read starting cell for alias texts
+def getIniCellForAlias():
+    return iniGet("SettingsAlias", "textboxAlias", "A3") or "A3"
 
 
-# read checkbox value in ini file
-def getIniCheckboxStateForAlias(config, ini_file):
-    if os.path.exists(ini_file):
-        config.read(ini_file)
-        return config.getboolean("SettingsAlias", "checkboxAlias", fallback=True)
-    else:
-        return True
+# Read "automatic alias" checkbox state
+def getIniCheckboxStateForAlias():
+    return iniGetBool("SettingsAlias", "checkboxAlias", True)
 
 
-# save column for alias labels and checkbox for alias value in ini file
-def save_settings_Alias(cell, checked, config, ini_file):
-    config.read(ini_file)
-    if "SettingsAlias" not in config:
-        config.add_section("SettingsAlias")
-
-    config.set("SettingsAlias", "textboxAlias", cell.upper())
-    config.set("SettingsAlias", "checkboxAlias", str(checked))
-    with open(ini_file, "w") as configfile:
-        config.write(configfile)
+# Save starting cell for alias texts and "automatic alias" checkbox state
+def save_settings_Alias(cell, checked):
+    iniSet({"SettingsAlias": {"textboxAlias": cell.upper(), "checkboxAlias": checked}})
 
 
 def isSketchActif():
@@ -583,7 +581,7 @@ class Dialog(QtGui.QDialog):
         self.checkboxAlias.setToolTip(ToolTip)
 
         self.textboxSpreadsheetName = QtGui.QLineEdit(
-            getIniName("Spreadsheet", config, ini_file)
+            getIniName("Spreadsheet")
         )
         self.textboxSpreadsheetName.setFixedWidth(200)  # size
         self.textboxSpreadsheetName.setToolTip(
@@ -591,7 +589,7 @@ class Dialog(QtGui.QDialog):
         )
 
         self.textboxTextdocumentName = QtGui.QLineEdit(
-            getIniName("Textdocument", config, ini_file)
+            getIniName("Textdocument")
         )
         self.textboxTextdocumentName.setFixedWidth(200)  # size
 
@@ -599,14 +597,14 @@ class Dialog(QtGui.QDialog):
             messages[language]["DialogTextboxTextdocumentNameToolTip"]
         )
 
-        self.textboxBodyName = QtGui.QLineEdit(getIniName("Body", config, ini_file))
+        self.textboxBodyName = QtGui.QLineEdit(getIniName("Body"))
         self.textboxBodyName.setFixedWidth(200)  # size
 
         self.textboxBodyName.setToolTip(
             messages[language]["DialogTextboxBodyNameToolTip"]
         )
 
-        self.textboxSketchName = QtGui.QLineEdit(getIniName("Sketch", config, ini_file))
+        self.textboxSketchName = QtGui.QLineEdit(getIniName("Sketch"))
         self.textboxSketchName.setMaximumWidth(
             200
         )  # Set the maximum width of the text box
@@ -653,7 +651,7 @@ class Dialog(QtGui.QDialog):
         # Set the XY Plane radio button to be checked by default
         self.radiobutton1.setChecked(True)
 
-        self.textboxAlias = QtGui.QLineEdit(self.getIniCellForAlias(config, ini_file))
+        self.textboxAlias = QtGui.QLineEdit(getIniCellForAlias())
         self.textboxAlias.setMaximumWidth(50)  # Set the maximum width of the text box
         self.textboxAlias.setMaxLength(4)  # Limit the text box to 4 characters
         self.textboxAlias.setToolTip(ToolTip)
@@ -673,7 +671,7 @@ class Dialog(QtGui.QDialog):
         self.checkboxBody.setChecked(bodyState == "exist" or bodyState == "on")
         self.checkboxSketch.setChecked(sketchState == "exist" or sketchState == "on")
         self.checkboxAlias.setChecked(
-            self.getIniCheckboxStateForAlias(config, ini_file)
+            getIniCheckboxStateForAlias()
         )
 
         self.checkbox1Document.stateChanged.connect(self.update_document_checkbox)
@@ -847,24 +845,19 @@ class Dialog(QtGui.QDialog):
 
         return checkbox
 
-    def getIniCellForAlias(self, config, ini_file):
-        return getIniCellForAlias(config, ini_file)
-
-    def getIniCheckboxStateForAlias(self, config, ini_file):
-        return getIniCheckboxStateForAlias(config, ini_file)
-
-    def save_settings(self, config, ini_file):
-        save_settings_Alias(
-            self.textboxAlias.text(), self.checkboxAlias.isChecked(), config, ini_file
-        )
-        save_settings_Name("Body", self.textboxBodyName.text(), config, ini_file)
-        save_settings_Name(
-            "Spreadsheet", self.textboxSpreadsheetName.text(), config, ini_file
-        )
-        save_settings_Name(
-            "Textdocument", self.textboxTextdocumentName.text(), config, ini_file
-        )
-        save_settings_Name("Sketch", self.textboxSketchName.text(), config, ini_file)
+    def save_settings(self):
+        iniSet({
+            "SettingsAlias": {
+                "textboxAlias": self.textboxAlias.text().upper(),
+                "checkboxAlias": self.checkboxAlias.isChecked(),
+            },
+            "SettingNames": {
+                "Body": self.textboxBodyName.text(),
+                "Spreadsheet": self.textboxSpreadsheetName.text(),
+                "Textdocument": self.textboxTextdocumentName.text(),
+                "Sketch": self.textboxSketchName.text(),
+            },
+        })
 
 
 # Retrieve the results after displaying the object creation dialogue box.
@@ -879,7 +872,7 @@ def get_user_input(
         dialog.exec()
     )  # Display the dialog box and wait for the user to make their choices
     if result:
-        dialog.save_settings(config, ini_file)  # Save the settings to the INI file
+        dialog.save_settings()  # Save the settings to the INI file
 
     # Return the state of the checkboxes and radio buttons, and the result of the dialog box
     return {
@@ -973,9 +966,9 @@ def addTheObjects():
             firstSpreadsheet.setAlignment("A1:B1", "center|vcenter|vimplied")
             firstSpreadsheet.setStyle("A1:B1", "bold")
             firstSpreadsheet.set("A1", messages[language]["TITLE"])
-            if getIniCellForAlias(config, ini_file):
+            if getIniCellForAlias():
                 cellAbove, cellRight = get_adjacent_cells(
-                    getIniCellForAlias(config, ini_file)
+                    getIniCellForAlias()
                 )
                 if cellAbove != "" and cellAbove not in ["A1", "B1"]:
                     firstSpreadsheet.set(cellAbove, messages[language]["Textsforalias"])
@@ -1211,7 +1204,7 @@ def setAlias(aliasCellsSelect, aliasAuto):
 
     tabCells = []
     if aliasAuto:
-        sellStart = getIniCellForAlias(config, ini_file)
+        sellStart = getIniCellForAlias()
         columnTextAlias = get_column(sellStart)
         rowStartAlias = get_row(sellStart)
         try:
@@ -1333,9 +1326,7 @@ class getConstraintType(QtGui.QDialog):
         constraintsLayoutBox.setLayout(constraintsLayout)
         layout.addWidget(constraintsLayoutBox)
 
-        global config
-        global ini_file
-        self.textboxAlias = QtGui.QLineEdit(self.getIniCellForAlias(config, ini_file))
+        self.textboxAlias = QtGui.QLineEdit(getIniCellForAlias())
 
         self.textboxAlias.setMaximumWidth(50)  # Set the maximum width of the text box
         self.textboxAlias.setMaxLength(4)  # Limit the text box to 4 characters
@@ -1382,7 +1373,7 @@ class getConstraintType(QtGui.QDialog):
         self.textboxAlias.setValidator(validator)
         self.textboxAlias.textChanged.connect(self.onTextChanged)
 
-        self.checkboxAlias.setChecked(getIniCheckboxStateForAlias(config, ini_file))
+        self.checkboxAlias.setChecked(getIniCheckboxStateForAlias())
         restOfLayoutGroupBox = QtGui.QGroupBox(
             messages[language]["getConstraintTypeCheckboxConflic"]
             + messages[language]["andAlias"]
@@ -1411,17 +1402,10 @@ class getConstraintType(QtGui.QDialog):
 
         layout.addWidget(self.radioGroupBox)
 
-        global macroDirectory
-        try:
-            filePath = os.path.join(
-                macroDirectory, "sketchConstraintFromSpreadsheet.ini"
-            )
-            config.read(filePath)
-            # read ini file to know last time state
-            lasChecked = config.getboolean("Conflict_detection", "save_checkbox_state")
-            self.checkboxConflic.setChecked(lasChecked)
-        except:
-            pass
+        # read ini file to know last time state
+        self.checkboxConflic.setChecked(
+            iniGetBool("Conflict_detection", "save_checkbox_state", True)
+        )
 
         # window positioning
         centerPoint = QGuiApplication.screens()[0].geometry().center()
@@ -1436,17 +1420,17 @@ class getConstraintType(QtGui.QDialog):
 
     def onOption1(self):
         self.choiceConstraint = "DistanceX"
-        self.save_settings(config, ini_file)
+        self.save_settings()
         self.close()
 
     def onOption2(self):
         self.choiceConstraint = "DistanceY"
-        self.save_settings(config, ini_file)
+        self.save_settings()
         self.close()
 
     def onOption3(self):
-        self.save_settings(config, ini_file)
         self.choiceConstraint = "Distance"
+        self.save_settings()
         self.close()
 
     def onOption4(self):
@@ -1454,26 +1438,11 @@ class getConstraintType(QtGui.QDialog):
         self.close()
 
     def onOptionCheckBox(self):
-        global macroDirectory
-        global config
         # Save checkbox state to file
-        filePath = os.path.join(macroDirectory, "sketchConstraintFromSpreadsheet.ini")
-        config["Conflict_detection"] = {
-            "save_checkbox_state": str(int(self.getCheckBoxState()))
-        }
-        with open(filePath, "w") as configfile:
-            config.write(configfile)
+        iniSet({"Conflict_detection": {"save_checkbox_state": int(self.getCheckBoxState())}})
 
-    def save_settings(self, config, ini_file):
-        save_settings_Alias(
-            self.textboxAlias.text(), self.checkboxAlias.isChecked(), config, ini_file
-        )
-
-    def getIniCellForAlias(self, config, ini_file):
-        return getIniCellForAlias(config, ini_file)
-
-    def getIniCheckboxStateForAlias(self, config, ini_file):
-        return getIniCheckboxStateForAlias(config, ini_file)
+    def save_settings(self):
+        save_settings_Alias(self.textboxAlias.text(), self.checkboxAlias.isChecked())
 
     def getCheckBoxState(self):
         return self.checkboxConflic.isChecked()
@@ -2063,7 +2032,7 @@ def main():
             isInternalObject1, isInternalObject2 = isInternalObject2, isInternalObject1
             x1, x2, y1, y2 = x2, x1, y2, y1
 
-    if getIniCheckboxStateForAlias(config, ini_file):
+    if getIniCheckboxStateForAlias():
         setAlias(False, True)
 
     # create constraint
