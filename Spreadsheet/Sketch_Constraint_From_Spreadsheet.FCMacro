@@ -2226,27 +2226,22 @@ def main():
             else:
                 print('There is an error in the formula', formula)
         else:
-            # If cellExpression starts with something like "radius", it is multiplied by 2 (to convert radius to diameter)
+            # If the alias starts with "radius" or "rayon", a circle gets a Radius constraint
+            # instead of a Diameter constraint
             wordsForArray = ["rayon", "radius"]
             expression = cellExpression.strip().lower()
             # Get the final segment after the last period (e.g. <<datas>>.rayonaaa → rayonaaa)
             suffix = expression.split(".")[-1]
             if any(suffix.startswith(word) for word in wordsForArray):
                 isRadius = True
-                print('isRadius vaut True')
-                print('typeIdGeometry1 ', typeIdGeometry1)
 
-            if (
-                    typeIdGeometry1 not in [
-                # "Part::GeomCircle",
-                # "Part::GeomArcOfCircle",
-                "Constraint",
-            ]
-                    and myPadOrPocket is None
-                    and form is not None
-                    and form.getRadiusOrDiameter() == "Radius"
-            ):
-                cellExpression = f"({cellExpression})/2"
+    # "Diameter in spreadsheet gives a radius in sketch" option (value divided by 2)
+    if (
+            form is not None  # form exists only for lines / points in a sketch
+            and myPadOrPocket is None
+            and form.getRadiusOrDiameter() == "Radius"
+    ):
+        cellExpression = f"({cellExpression})/2"
 
     if myPadOrPocket != None:
         propertyName, propertyNameCompleteStrDico, propertyType, objectName, objectType, property_editable, property_enabled, = (
