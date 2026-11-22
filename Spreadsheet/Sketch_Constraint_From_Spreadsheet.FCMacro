@@ -1726,6 +1726,101 @@ def apply_to_property(obj, cellExpression, propertyInfo=None):
     return True
 
 
+# Dialog boxes used when linking the constraint (replaced by stubs in tests)
+def askOkCancel(message):
+    return QtGui.QMessageBox.warning(
+        Gui.getMainWindow(),
+        messages[language]["Warning"],
+        message,
+        QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
+    ) == QtGui.QMessageBox.Ok
+
+
+def askYesNo(message):  # "No" by default
+    return QtGui.QMessageBox.question(
+        None,
+        "",
+        message,
+        QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
+        QtGui.QMessageBox.No,
+    ) == QtGui.QMessageBox.Yes
+
+
+##########################################
+# Add the constraint to the sketch
+# Parameters :
+# - nbSelected : number of selected objects (1 or 2)
+# - typeIdGeometry1 : type of the first selected object (circle, line, 'Constraint'...)
+# - point1, point2 : (indexObject, indexExtremite, isInternalObject)
+# - myConstraint : 'DistanceX', 'DistanceY' or 'Distance' (lines and points)
+# - cellContents : value of the cell
+# - isRadius : a circle gets a Radius constraint instead of a Diameter constraint
+# - indexConstraint : index of the selected constraint, if a constraint is selected
+# return : index of the constraint (new one, or the selected one)
+##########################################
+def create_constraint(mySketch, nbSelected, typeIdGeometry1, point1, point2,
+                      myConstraint, cellContents, isRadius, indexConstraint):
+    if nbSelected == 1 and typeIdGeometry1 in CIRCLE_TYPES:  # internal or external circle
+        indexConstraint = mySketch.addConstraint(
+            Sketcher.Constraint("Radius" if isRadius else "Diameter", point1[0], cellContents)
+        )
+    elif typeIdGeometry1 != "Constraint":  # a line or 2 points
+        indexConstraint = mySketch.addConstraint(
+            Sketcher.Constraint(
+                myConstraint, point1[0], point1[1], point2[0], point2[1], cellContents
+            )
+        )
+    return indexConstraint
+
+
+# True if only external objects (from another sketch) are selected :
+# the constraint must then be a reference one
+def allSelectedAreExternal(nbSelected, point1, point2):
+    return (nbSelected == 1 and not point1[2]) or (
+            nbSelected == 2 and not point1[2] and not point2[2])
+
+
+##########################################
+# Link the constraint and the cell
+# - only external objects : the constraint becomes a reference
+# - driving constraint : its value is the cell expression
+# - reference constraint : after confirmation, the cell gets the value of the
+#   constraint (=href(Sketch.Constraints.Name)); the constraint is named if needed
+##########################################
+def link_constraint(mySketch, indexConstraint, cellExpression, allExternal,
+                    mySpreadsheet, cellCode, confirm=askOkCancel):
+    if allExternal:
+        mySketch.setDriving(indexConstraint, False)
+    elif mySketch.Constraints[indexConstraint].Driving:
+        # set the constraint 'formula' (ex : 'spreadSheet.unAlias')
+        mySketch.setExpression("Constraints[" + str(indexConstraint) + "]", cellExpression)
+    else:
+        print("The constraints is a reference one")
+        if mySketch.Constraints[indexConstraint].Name == "":
+            message = messages[language]["referenceNoName"]
+        else:
+            message = messages[language]["referenceWithName"]
+        if confirm(message):
+            if mySketch.Constraints[indexConstraint].Name == "":
+                mySketch.renameConstraint(
+                    indexConstraint,
+                    mySketch.Name + "_" + str(indexConstraint) + "_"
+                    + datetime.now().strftime("%S"),
+                )
+            mySpreadsheet.set(
+                cellCode,
+                "=href(" + mySketch.Name + ".Constraints."
+                + mySketch.Constraints[indexConstraint].Name + ")",
+            )
+
+
+# If the sketch has a conflict, propose to delete the new constraint
+def remove_if_conflict(mySketch, indexConstraint, confirm=askYesNo):
+    if "Invalid" in mySketch.State:
+        if confirm(messages[language]["ConstarintConflicDetected"]):
+            mySketch.delConstraint(indexConstraint)
+
+
 ##########################################
 # Main proceddure
 ##########################################
@@ -1733,6 +1828,9 @@ def main():
     form = None
     sheckBoxConstraintConflicState = False
     indexConstraint = -1
+    myConstraint = None
+    # second point : only used when 2 points or a whole line are selected
+    indexObjectHavingPoint2, indexExtremiteLine2, isInternalObject2 = None, None, True
 
     if addTheObjects():  # Creation of missing objects if wanted
         return
@@ -2029,112 +2127,26 @@ def main():
         apply_to_property(myPadOrPocket, cellExpression)
         return
 
-    # create constraint for internal or external circle
-    if len(sels[0].SubElementNames) == 1 and typeIdGeometry1 in [
-        "Part::GeomCircle",
-        "Part::GeomArcOfCircle",
-    ]:
-        if isRadius:
-            indexConstraint = mySketch.addConstraint(
-                Sketcher.Constraint("Radius", indexObjectHavingPoint1, cellContents)
-            )
-        else:
-            indexConstraint = mySketch.addConstraint(
-                Sketcher.Constraint("Diameter", indexObjectHavingPoint1, cellContents)
-            )
-
-            # create constraint for line or points
-    elif typeIdGeometry1 != "Constraint":  # no selected constraint, just line or points
-        # create the constraint
-        indexConstraint = mySketch.addConstraint(
-            Sketcher.Constraint(
-                myConstraint,
-                indexObjectHavingPoint1,
-                indexExtremiteLine1,
-                indexObjectHavingPoint2,
-                indexExtremiteLine2,
-                cellContents,
-            )
-        )
-
-    # if one external line or only one external circle or two external object
-    # was selected : constraint is a reference
-    if (
-            len(sels[0].SubElementNames) == 1
-            and not isInternalObject1
-            or len(sels[0].SubElementNames) == 2
-            and not isInternalObject1
-            and not isInternalObject2
-    ):
-        mySketch.setDriving(
-            indexConstraint, False
-        )  # External edge constraint is a reference
-    elif mySketch.Constraints[indexConstraint].Driving:  # not a reference constraint
-        # set the constraint'formula' (ex : 'spreadSheet.unAlias')
-        mySketch.setExpression(
-            "Constraints[" + str(indexConstraint) + "]", cellExpression
-        )
-
-    elif not mySketch.Constraints[
-        indexConstraint
-    ].Driving:  # it is a reference constraint
-        # on va mettre dans la cellule du spreadsheet la formule pour récupérer la valeur de la contrainte
-        # par exemple =href(Sketch.Constraints.Distance)
-        print("The constraints is a reference one")
-
-        if mySketch.Constraints[indexConstraint].Name == "":
-            message = messages[language]["referenceNoName"]
-
-        else:
-            message = messages[language]["referenceWithName"]
-
-        if (
-                QtGui.QMessageBox.warning(
-                    Gui.getMainWindow(),
-                    messages[language]["Warning"],
-                    message,
-                    QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
-                )
-                == QtGui.QMessageBox.Ok
-        ):
-            # if user  want
-            if mySketch.Constraints[indexConstraint].Name == "":
-                # nommer la contrainte
-                mySketch.renameConstraint(
-                    indexConstraint,
-                    mySketch.Name
-                    + "_"
-                    + str(indexConstraint)
-                    + "_"
-                    + datetime.now().strftime("%S"),
-                )
-            mySpreadsheet.set(
-                cellCode,
-                "=href("
-                + mySketch.Name
-                + ".Constraints."
-                + mySketch.Constraints[indexConstraint].Name
-                + ")",
-            )
+    nbSelected = len(sels[0].SubElementNames)
+    point1 = (indexObjectHavingPoint1, indexExtremiteLine1, isInternalObject1)
+    point2 = (indexObjectHavingPoint2, indexExtremiteLine2, isInternalObject2)
+    indexConstraint = create_constraint(
+        mySketch, nbSelected, typeIdGeometry1, point1, point2,
+        myConstraint, cellContents, isRadius, indexConstraint,
+    )
+    link_constraint(
+        mySketch, indexConstraint, cellExpression,
+        allSelectedAreExternal(nbSelected, point1, point2),
+        mySpreadsheet, cellCode,
+    )
 
     # put Sketch window ahead
     activateSketchEditingWindow()
     Gui.Selection.clearSelection()
 
     mySketch.recompute()
-    # is ther constraintes conflicts?
     if sheckBoxConstraintConflicState:
-        if "Invalid" in mySketch.State:
-            a = QtGui.QMessageBox.question(
-                None,
-                "",
-                messages[language]["ConstarintConflicDetected"],
-                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
-                QtGui.QMessageBox.No,
-            )
-            if a == QtGui.QMessageBox.Yes:
-                mySketch.delConstraint(indexConstraint)
-                # App.ActiveDocument.recompute()
+        remove_if_conflict(mySketch, indexConstraint)
 
     recomputeAll()
     activateSketchEditingWindow()
