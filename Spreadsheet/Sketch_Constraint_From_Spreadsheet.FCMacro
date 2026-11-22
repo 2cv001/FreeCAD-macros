@@ -49,6 +49,7 @@ except ImportError:  # Qt5 : no QRegularExpressionValidator
     from PySide.QtGui import QRegExpValidator as fcRegExpValidator
 
 from datetime import datetime
+from collections import namedtuple
 import configparser
 import os
 import FreeCAD as App
@@ -1632,6 +1633,82 @@ def featuresObjSelected(mySketch, sel, numOrdreObjSelected, indexExtremite):
     )
 
 
+# Features of a selected point, same order as the result of featuresObjSelected
+Feature = namedtuple(
+    "Feature", ["typeIdGeometry", "typeName", "index", "extremite", "x", "y", "isInternal"]
+)
+POINT_NAMES = ("Vertex", "V_Axis", "H_Axis", "RootPoint", "ExternalEdge")
+SELECT_HELP = "Select 1 line, 2 points or a constraint in a sketch before selecting a cell in the spreadsheet"
+
+
+######################################################################################
+# Analyse the selection in the sketch in edit mode
+# Valid selections : 1 line, 1 circle (or its center), 1 constraint,
+#                    2 points, 1 circle + 1 point
+# return (p1, p2, indexConstraint, error)
+# - p1, p2 : Feature of the 2 points (p2 is None for a circle or a constraint)
+#   for a line : its start point and its end point
+# - indexConstraint : index of the selected constraint, -1 if none
+# - error : message to show if the selection is not valid, else None
+######################################################################################
+def analyse_selection(mySketch, sels):
+    if len(sels) == 0 or len(sels[0].SubElementNames) == 0:
+        return None, None, -1, (
+                "Anything valid is select.\n"
+                + "Select 1 line, 2 points or a constraint in a sketch in editing mode "
+                + "before selecting a cell in the spreadsheet")
+    sel = sels[0]
+    nbSelected = len(sel.SubElementNames)
+    if nbSelected > 2:
+        return None, None, -1, "Too many objects selected.\n" + SELECT_HELP
+
+    p1 = Feature(*featuresObjSelected(mySketch, sel, 0, 1))
+    p2 = None
+    indexConstraint = -1
+    if nbSelected == 1:
+        if p1.typeName == "Constraint":
+            indexConstraint = p1.index
+        elif p1.typeIdGeometry == "Part::GeomLineSegment" and p1.typeName in ("Edge", "ExternalEdge"):
+            # a whole line (a single vertex of a line is not enough) : p2 = end point
+            p2 = Feature(*featuresObjSelected(mySketch, sel, 0, 2))
+        elif p1.typeIdGeometry not in CIRCLE_TYPES:
+            # a single vertex (of a line, of an ellipse...), axis, ellipse... : no constraint possible
+            # (a circle, or only its center, is accepted on purpose: it gives a Diameter/Radius constraint)
+            return p1, None, -1, (
+                    "This single object is not supported.\n"
+                    + "Select 1 line, 1 circle, 2 points or a constraint in a sketch "
+                    + "before selecting a cell in the spreadsheet")
+    else:
+        p2 = Feature(*featuresObjSelected(mySketch, sel, 1, 1))
+        circleAndPoint = p1.typeIdGeometry in CIRCLE_TYPES and p1.typeName == "Edge"
+        if (p1.typeName not in POINT_NAMES or p2.typeName not in POINT_NAMES) and not circleAndPoint:
+            return p1, p2, -1, "2 objects are selected but not 2 points .\n" + SELECT_HELP
+    return p1, p2, indexConstraint, None
+
+
+# Button having the focus in the dialog box :
+# DistanceX if the two points are more horizontal than vertical
+def defaultConstraintButton(p1, p2):
+    return "DistanceX" if abs(p1.x - p2.x) > abs(p1.y - p2.y) else "DistanceY"
+
+
+# With an axis, no choice : DistanceX from V_Axis, DistanceY from H_Axis. None otherwise
+def forcedConstraint(p1, p2):
+    if "V_Axis" in (p1.typeName, p2.typeName):
+        return "DistanceX"
+    if "H_Axis" in (p1.typeName, p2.typeName):
+        return "DistanceY"
+    return None
+
+
+# For DistanceX (DistanceY), the first point must be the one on the left (bottom)
+def orderPoints(myConstraint, p1, p2):
+    if (myConstraint == "DistanceX" and p1.x > p2.x) or (
+            myConstraint == "DistanceY" and p1.y > p2.y):
+        return p2, p1
+    return p1, p2
+
+
 ##########################################
 # function returning selected objects at GUI level
 #  = Sketch, SpreadSheet ....
@@ -1829,8 +1906,6 @@ def main():
     sheckBoxConstraintConflicState = False
     indexConstraint = -1
     myConstraint = None
-    # second point : only used when 2 points or a whole line are selected
-    indexObjectHavingPoint2, indexExtremiteLine2, isInternalObject2 = None, None, True
 
     if addTheObjects():  # Creation of missing objects if wanted
         return
@@ -1876,7 +1951,6 @@ def main():
         sels = Gui.Selection.getSelectionEx()
         if not isSketchActif():
             myPadOrPocket = sels[0].Object  # object owner of property
-            typeIdGeometry1 = sels[0].Object.TypeId
     except IndexError:  # nothing selected
         pass
 
@@ -1931,177 +2005,32 @@ def main():
             )
             return
 
-    column = get_column(cellCode)
-
     # Part sketch
     # ----------------------------
     sels = Gui.Selection.getSelectionEx()
+    p1 = p2 = None
+    if myPadOrPocket is None:  # a sketch is in edit mode
+        p1, p2, indexConstraint, error = analyse_selection(mySketch, sels)
+        if error:
+            QtGui.QMessageBox.information(None, messages[language]["Warning"], error)
+            activateSketchEditingWindow()
+            return
 
-    if (len(sels) == 0 or len(sels[0].SubElementNames) == 0) and myPadOrPocket == None:
-        QtGui.QMessageBox.information(
-            None,
-            messages[language]["Warning"],
-            "Anything valid is select.\n"
-            + "Select 1 line, 2 points or a constraint in a sketch in editing mode before selecting a cell in the spreadsheet",
-        )
-        activateSketchEditingWindow()
-        return
-
-    if len(sels) == 0:
-        QtGui.QMessageBox.information(
-            None,
-            messages[language]["Warning"],
-            "Anything is select.\n"
-            + "Select 1 line, 2 points or a constraint in a sketch in editing mode before selecting a cell in the spreadsheet",
-        )
-        return
-
-    elif len(sels[0].SubElementNames) > 2:
-        QtGui.QMessageBox.information(
-            None,
-            messages[language]["Warning"],
-            "Too many objects selected.\n"
-            + "Select 1 line, 2 points or a constraint in a sketch before selecting a cell in the spreadsheet",
-        )
-        activateSketchEditingWindow()
-        return
-    else:
-
-        # only one obj selected
-        # ------------------------
-        if len(sels[0].SubElementNames) == 1:  # only one obj selected
-            # startPoint of the line
-            (
-                typeIdGeometry1,
-                typeInSubElementName1,
-                indexObjectHavingPoint1,
-                indexExtremiteLine1,
-                x1,
-                y1,
-                isInternalObject1,
-            ) = featuresObjSelected(mySketch, sels[0], 0, 1)
-
-            if (
-                    typeInSubElementName1 == "Constraint"
-                    and len(sels[0].SubElementNames) == 1
-            ):
-                indexConstraint = indexObjectHavingPoint1
-            elif (
-                    typeIdGeometry1 == "Part::GeomLineSegment"
-                    and typeInSubElementName1 in ("Edge", "ExternalEdge")
-            ):  # a whole line (a single vertex of a line is not enough)
-                (
-                    typeIdGeometry2,
-                    typeInSubElementName2,
-                    indexObjectHavingPoint2,
-                    indexExtremiteLine2,
-                    x2,
-                    y2,
-                    isInternalObject2,
-                ) = featuresObjSelected(mySketch, sels[0], 0, 2)
-            elif typeIdGeometry1 not in ["Part::GeomCircle", "Part::GeomArcOfCircle"]:
-                # a single vertex (of a line, of an ellipse...), axis, ellipse... : no constraint possible
-                # (a circle, or only its center, is accepted on purpose: it gives a Diameter/Radius constraint)
-                QtGui.QMessageBox.information(
-                    None,
-                    messages[language]["Warning"],
-                    "This single object is not supported.\n"
-                    + "Select 1 line, 1 circle, 2 points or a constraint in a sketch before selecting a cell in the spreadsheet",
-                )
-                activateSketchEditingWindow()
-                return
-
-        # two obj selected
-        # ------------------------
-        if len(sels[0].SubElementNames) == 2:  # two obj selected
-            (
-                typeIdGeometry1,
-                typeInSubElementName1,
-                indexObjectHavingPoint1,
-                indexExtremiteLine1,
-                x1,
-                y1,
-                isInternalObject1,
-            ) = featuresObjSelected(mySketch, sels[0], 0, 1)
-            (
-                typeIdGeometry2,
-                typeInSubElementName2,
-                indexObjectHavingPoint2,
-                indexExtremiteLine2,
-                x2,
-                y2,
-                isInternalObject2,
-            ) = featuresObjSelected(mySketch, sels[0], 1, 1)
-
-            if (
-                    typeInSubElementName1
-                    not in ("Vertex", "V_Axis", "H_Axis", "RootPoint", "ExternalEdge")
-                    or typeInSubElementName2
-                    not in ("Vertex", "V_Axis", "H_Axis", "RootPoint", "ExternalEdge")
-            ) and not (
-                    typeIdGeometry1 in ("Part::GeomCircle", "Part::GeomArcOfCircle")
-                    and typeInSubElementName1 in ["Edge"]
-            ):
-                QtGui.QMessageBox.information(
-                    None,
-                    messages[language]["Warning"],
-                    "2 objects are selected but not 2 points .\n"
-                    + "Select 1 line, 2 points or a constraint in a sketch before selecting a cell in the spreadsheet",
-                )
-                activateSketchEditingWindow()
-                return
-
-    # --------------------------------------
-    # line or points have been selected have a look if we need to swap points
-    # -------------------------------------
-    # (two objects: already validated above as 2 points or circle + point)
-    if (
-            len(sels[0].SubElementNames) == 1
-            and typeIdGeometry1 in ["Part::GeomLineSegment"]
-    ) or len(sels[0].SubElementNames) == 2:
-
-        # to give focus on the good button
-        # (Button DistanceX if the two points are more horizontal than vertical)
-        if abs(x1 - x2) > abs(y1 - y2):
-            buttonHavingFocus = "DistanceX"
-        else:
-            buttonHavingFocus = "DistanceY"
-
-        # ------------------------------------------------
-        # ask the user what kind of constraint he wants
-        # ------------------------------------------------
-        form = getConstraintType(buttonHavingFocus)
-        # conflict : is the checkboxSheced?
-        sheckBoxConstraintConflicState = form.getCheckBoxState()
-
-        if typeInSubElementName1 in ["V_Axis"] or typeInSubElementName2 in ["V_Axis"]:
-            myConstraint = "DistanceX"
-        elif typeInSubElementName1 in ["H_Axis"] or typeInSubElementName2 in ["H_Axis"]:
-            myConstraint = "DistanceY"
-        else:
-            form.exec()  # open dialog box
-            # conflict : is the checkbox Shecked?
+        # a line or 2 points : ask the user what kind of constraint he wants
+        if (len(sels[0].SubElementNames) == 1
+                and p1.typeIdGeometry == "Part::GeomLineSegment") \
+                or len(sels[0].SubElementNames) == 2:
+            form = getConstraintType(defaultConstraintButton(p1, p2))
             sheckBoxConstraintConflicState = form.getCheckBoxState()
-            if form.choiceConstraint in ("Cancel", ""):
-                activateSketchEditingWindow()
-                return
-            myConstraint = (
-                form.choiceConstraint
-            )  # 'DistanceX' or 'DistanceY' or 'Distance'
-
-        if (myConstraint == "DistanceX" and x1 > x2) or (
-                myConstraint == "DistanceY" and y1 > y2
-        ):
-            indexObjectHavingPoint1, indexObjectHavingPoint2 = (
-                indexObjectHavingPoint2,
-                indexObjectHavingPoint1,
-            )
-            indexExtremiteLine1, indexExtremiteLine2 = (
-                indexExtremiteLine2,
-                indexExtremiteLine1,
-            )
-            isInternalObject1, isInternalObject2 = isInternalObject2, isInternalObject1
-            x1, x2, y1, y2 = x2, x1, y2, y1
+            myConstraint = forcedConstraint(p1, p2)  # an axis is selected
+            if myConstraint is None:
+                form.exec()  # open dialog box
+                sheckBoxConstraintConflicState = form.getCheckBoxState()
+                if form.choiceConstraint in ("Cancel", ""):
+                    activateSketchEditingWindow()
+                    return
+                myConstraint = form.choiceConstraint  # 'DistanceX', 'DistanceY' or 'Distance'
+            p1, p2 = orderPoints(myConstraint, p1, p2)
 
     if getIniCheckboxStateForAlias():
         setAlias(False, True)
@@ -2128,10 +2057,10 @@ def main():
         return
 
     nbSelected = len(sels[0].SubElementNames)
-    point1 = (indexObjectHavingPoint1, indexExtremiteLine1, isInternalObject1)
-    point2 = (indexObjectHavingPoint2, indexExtremiteLine2, isInternalObject2)
+    point1 = (p1.index, p1.extremite, p1.isInternal)
+    point2 = (p2.index, p2.extremite, p2.isInternal) if p2 else (None, None, True)
     indexConstraint = create_constraint(
-        mySketch, nbSelected, typeIdGeometry1, point1, point2,
+        mySketch, nbSelected, p1.typeIdGeometry, point1, point2,
         myConstraint, cellContents, isRadius, indexConstraint,
     )
     link_constraint(
