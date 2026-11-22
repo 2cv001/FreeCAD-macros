@@ -1656,13 +1656,48 @@ def getGuiObjsSelect(type=""):
 
 
 ##########################################
+# Build the expression linking a constraint or a property to a cell
+# Parameters :
+# - spreadsheetLabel : label of the spreadsheet (ex 'datas')
+# - cellCode : address of the cell (ex 'C2')
+# - cellAlias : alias of the cell, or None
+# - divideBy2 : True for the option "diameter in spreadsheet gives a radius in sketch"
+# return :
+# - cellExpression : ex '<<datas>>.C2', '<<datas>>.longueur', '<<datas>>.L_f__mul_2*2'
+# - isRadius : True if the alias starts with 'radius' or 'rayon'
+#   (a circle then gets a Radius constraint instead of a Diameter constraint)
+##########################################
+def build_expression(spreadsheetLabel, cellCode, cellAlias, divideBy2):
+    isRadius = False
+    if cellAlias is None:
+        cellExpression = "<<" + spreadsheetLabel + ">>." + cellCode
+    else:
+        cellExpression = "<<" + spreadsheetLabel + ">>." + cellAlias
+        if formulaSeparator in cellAlias:
+            # formula after the separator, with key words of dicoFormula
+            # ex : alias 'radius_f__mul_2_plu_1' gives '<<datas>>.radius_f__mul_2_plu_1*2+1'
+            formula = cellAlias.split(formulaSeparator, 1)[1].lower()
+            for word, remplacement in dicoFormula.items():
+                formula = formula.replace(word.lower(), remplacement)
+            if validate_expression('0' + formula):
+                cellExpression = cellExpression + formula
+            else:
+                print('There is an error in the formula', formula)
+        elif any(cellAlias.lower().startswith(word) for word in ("rayon", "radius")):
+            isRadius = True
+
+    if divideBy2:
+        cellExpression = f"({cellExpression})/2"
+    return cellExpression, isRadius
+
+
+##########################################
 # Main proceddure
 ##########################################
 def main():
     form = None
     sheckBoxConstraintConflicState = False
     indexConstraint = -1
-    isRadius = False  #########################################################"
 
     if addTheObjects():  # Creation of missing objects if wanted
         return
@@ -1942,39 +1977,18 @@ def main():
     # =================================
     # get value for constraint
     cellAlias = App.ActiveDocument.getObject(mySpreadSheetName).getAlias(cellCode)
-
-    if cellAlias == None:
-        cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellCode
-    else:
-        cellExpression = "<<" + mySpreadSheetLabel + ">>" + "." + cellAlias
-        # to add a formula via key word dicoformula. Means there is a formula after this word
-        if formulaSeparator in cellExpression:
-            formula = cellExpression
-            formula = formula.split(formulaSeparator, 1)[1]
-            formula = formula.lower()
-            for word, remplacement in dicoFormula.items():
-                formula = formula.replace(word.lower(), remplacement)
-            if validate_expression('0' + formula):
-                cellExpression = cellExpression + formula
-            else:
-                print('There is an error in the formula', formula)
-        else:
-            # If the alias starts with "radius" or "rayon", a circle gets a Radius constraint
-            # instead of a Diameter constraint
-            wordsForArray = ["rayon", "radius"]
-            expression = cellExpression.strip().lower()
-            # Get the final segment after the last period (e.g. <<datas>>.rayonaaa → rayonaaa)
-            suffix = expression.split(".")[-1]
-            if any(suffix.startswith(word) for word in wordsForArray):
-                isRadius = True
-
-    # "Diameter in spreadsheet gives a radius in sketch" option (value divided by 2)
-    if (
-            form is not None  # form exists only for lines / points in a sketch
-            and myPadOrPocket is None
-            and form.getRadiusOrDiameter() == "Radius"
-    ):
-        cellExpression = f"({cellExpression})/2"
+    cellExpression, isRadius = build_expression(
+        mySpreadSheetLabel,
+        cellCode,
+        cellAlias,
+        # "Diameter in spreadsheet gives a radius in sketch" option (value divided by 2)
+        # (form exists only for lines / points in a sketch)
+        divideBy2=(
+                form is not None
+                and myPadOrPocket is None
+                and form.getRadiusOrDiameter() == "Radius"
+        ),
+    )
 
     if myPadOrPocket != None:
         propertyName, propertyNameCompleteStrDico, propertyType, objectName, objectType, property_editable, property_enabled, = (
