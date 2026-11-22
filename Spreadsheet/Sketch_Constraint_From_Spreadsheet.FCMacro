@@ -161,6 +161,25 @@ messages = {
                              + "tapez Gui.ActiveDocument.ActiveView.getSheet().recompute(True) dans la console python. "
                              + "je ne recommande pas son utilisation car FreeCad manage mal les href.",
         "ClickOnACellBefore": "Cliquez dans une cellule avec une valeur numérique avant de lancer la macro.",
+        "SelectHelp": "Sélectionnez 1 ligne, 2 points ou une contrainte dans un sketch "
+                      + "avant de sélectionner une cellule du tableur.",
+        "SelectNothing": "Aucune sélection valide.\n"
+                         + "Sélectionnez 1 ligne, 2 points ou une contrainte dans un sketch en mode édition "
+                         + "avant de sélectionner une cellule du tableur.",
+        "SelectTooMany": "Trop d'objets sélectionnés.",
+        "SelectSingleNotSupported": "Cet objet seul n'est pas pris en charge.\n"
+                                    + "Sélectionnez 1 ligne, 1 cercle, 2 points ou une contrainte dans un sketch "
+                                    + "avant de sélectionner une cellule du tableur.",
+        "SelectTwoNotPoints": "2 objets sont sélectionnés, mais ce ne sont pas 2 points.",
+        "SelectInSketchEdit": "Sélectionnez un objet (point, ligne...) dans le sketch en mode édition.",
+        "HowToUse": "1- Sélectionnez une ligne ou 2 points"
+                    + "\n 2- allez dans un tableur"
+                    + "\n 3- sélectionnez la cellule contenant la valeur"
+                    + "\n 4- restez dans le tableur et lancez la macro",
+        "ActivateWindowTitle": "Activation de la fenêtre",
+        "NoActiveDocument": "Pas de document actif.",
+        "No3DView": "Pas de vue 3D ouverte pour le document actif.",
+        "NoSketchInEdit": "Aucune vue 3D n'a de sketch en mode édition pour le document actif.",
         "NoObjectSelected": "Vous n'avez pas sélectionné d'objets dans le sketch actif."
                             + "\nCela veut il dire que vous souhaitez créer automatiquement des alias à droite des cellules sélectionnées"
                             + "en utilisant le texte de ces cellules sélectionnées."
@@ -230,6 +249,25 @@ messages = {
                              + "\n To remove the pending status, trigger a recalculation on the spreadsheet or on the cell or "
                              + "type Gui.ActiveDocument.ActiveView.getSheet().recompute(True) in the python console.",
         "ClickOnACellBefore": "Click on a cell with a numeric value before runing the macro",
+        "SelectHelp": "Select 1 line, 2 points or a constraint in a sketch "
+                      + "before selecting a cell in the spreadsheet.",
+        "SelectNothing": "Nothing valid is selected.\n"
+                         + "Select 1 line, 2 points or a constraint in a sketch in edit mode "
+                         + "before selecting a cell in the spreadsheet.",
+        "SelectTooMany": "Too many objects selected.",
+        "SelectSingleNotSupported": "This single object is not supported.\n"
+                                    + "Select 1 line, 1 circle, 2 points or a constraint in a sketch "
+                                    + "before selecting a cell in the spreadsheet.",
+        "SelectTwoNotPoints": "2 objects are selected, but they are not 2 points.",
+        "SelectInSketchEdit": "Select an object (point, line...) in the sketch in edit mode.",
+        "HowToUse": "1- Select a line or 2 points"
+                    + "\n 2- go to a spreadsheet"
+                    + "\n 3- select the cell containing the value"
+                    + "\n 4- stay in the spreadsheet and launch the macro",
+        "ActivateWindowTitle": "Activate window",
+        "NoActiveDocument": "No active document.",
+        "No3DView": "No 3D view opened for the active document.",
+        "NoSketchInEdit": "No 3D view has a sketch in edit mode for the active document.",
         "NoObjectSelected": "You have not selected any objects in the active sketch."
                             + "\nDoes this mean you want to automatically create aliases to the right of the selected cells"
                             + "using the text of these selected cells?"
@@ -1481,15 +1519,17 @@ def activateSketchEditingWindow():
     doc = Gui.ActiveDocument
     if not doc:
         QtGui.QMessageBox.information(
-            Gui.getMainWindow(), "Activate window", "No active document"
+            Gui.getMainWindow(),
+            messages[language]["ActivateWindowTitle"],
+            messages[language]["NoActiveDocument"],
         )
         return
     views = Gui.ActiveDocument.mdiViewsOfType("Gui::View3DInventor")
     if not views:
         QtGui.QMessageBox.information(
             Gui.getMainWindow(),
-            "Activate window",
-            "No 3D view opened for active document",
+            messages[language]["ActivateWindowTitle"],
+            messages[language]["No3DView"],
         )
         return
     editView = None
@@ -1500,8 +1540,8 @@ def activateSketchEditingWindow():
     if not editView:
         QtGui.QMessageBox.information(
             Gui.getMainWindow(),
-            "Activate window",
-            "No 3D view has sketch in edit mode for active document",
+            messages[language]["ActivateWindowTitle"],
+            messages[language]["NoSketchInEdit"],
         )
         return
     for win in Gui.getMainWindow().centralWidget().subWindowList():
@@ -1638,7 +1678,6 @@ Feature = namedtuple(
     "Feature", ["typeIdGeometry", "typeName", "index", "extremite", "x", "y", "isInternal"]
 )
 POINT_NAMES = ("Vertex", "V_Axis", "H_Axis", "RootPoint", "ExternalEdge")
-SELECT_HELP = "Select 1 line, 2 points or a constraint in a sketch before selecting a cell in the spreadsheet"
 
 
 ######################################################################################
@@ -1652,15 +1691,13 @@ SELECT_HELP = "Select 1 line, 2 points or a constraint in a sketch before select
 # - error : message to show if the selection is not valid, else None
 ######################################################################################
 def analyse_selection(mySketch, sels):
+    msg = messages[language]
     if len(sels) == 0 or len(sels[0].SubElementNames) == 0:
-        return None, None, -1, (
-                "Anything valid is select.\n"
-                + "Select 1 line, 2 points or a constraint in a sketch in editing mode "
-                + "before selecting a cell in the spreadsheet")
+        return None, None, -1, msg["SelectNothing"]
     sel = sels[0]
     nbSelected = len(sel.SubElementNames)
     if nbSelected > 2:
-        return None, None, -1, "Too many objects selected.\n" + SELECT_HELP
+        return None, None, -1, msg["SelectTooMany"] + "\n" + msg["SelectHelp"]
 
     p1 = Feature(*featuresObjSelected(mySketch, sel, 0, 1))
     p2 = None
@@ -1674,15 +1711,12 @@ def analyse_selection(mySketch, sels):
         elif p1.typeIdGeometry not in CIRCLE_TYPES:
             # a single vertex (of a line, of an ellipse...), axis, ellipse... : no constraint possible
             # (a circle, or only its center, is accepted on purpose: it gives a Diameter/Radius constraint)
-            return p1, None, -1, (
-                    "This single object is not supported.\n"
-                    + "Select 1 line, 1 circle, 2 points or a constraint in a sketch "
-                    + "before selecting a cell in the spreadsheet")
+            return p1, None, -1, msg["SelectSingleNotSupported"]
     else:
         p2 = Feature(*featuresObjSelected(mySketch, sel, 1, 1))
         circleAndPoint = p1.typeIdGeometry in CIRCLE_TYPES and p1.typeName == "Edge"
         if (p1.typeName not in POINT_NAMES or p2.typeName not in POINT_NAMES) and not circleAndPoint:
-            return p1, p2, -1, "2 objects are selected but not 2 points .\n" + SELECT_HELP
+            return p1, p2, -1, msg["SelectTwoNotPoints"] + "\n" + msg["SelectHelp"]
     return p1, p2, indexConstraint, None
 
 
@@ -1961,7 +1995,7 @@ def main():
             QtGui.QMessageBox.information(
                 None,
                 messages[language]["Warning"],
-                "Select object (point, line...) in the sketch in edition mode",
+                messages[language]["SelectInSketchEdit"],
             )
             # activateSketchEditingWindow()
             return
@@ -1977,10 +2011,7 @@ def main():
         QtGui.QMessageBox.information(
             None,
             messages[language]["Warning"],
-            "1- Select a line or 2 points"
-            + "\n 2- go to a spreadsheet"
-            + "\n 3- select the cell containing the value."
-            + "\n 4- stay in the spreadsheet and launch the macro",
+            messages[language]["HowToUse"],
         )
         activateSketchEditingWindow()
         return
