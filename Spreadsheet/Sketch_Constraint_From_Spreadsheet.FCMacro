@@ -1852,7 +1852,7 @@ def featuresObjSelected(mySketch, sel, numOrdreObjSelected, indexExtremite):
                         .Geometry[iNumExtGeometry - 1]
                         .StartPoint.y
                     )
-                if indexExtremiteLine == 0:
+                if indexExtremiteLine == 2:
                     x = (
                         App.ActiveDocument.getObject(externalSketchName)
                         .Geometry[iNumExtGeometry - 1]
