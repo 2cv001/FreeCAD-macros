@@ -1556,7 +1556,7 @@ class getConstraintType(QtGui.QDialog):
             )
             config.read(filePath)
             # read ini file to know last time state
-            lasChecked = config.getboolean("ConflictDetection", "save_checkbox_state")
+            lasChecked = config.getboolean("Conflict_detection", "save_checkbox_state")
             self.checkboxConflic.setChecked(lasChecked)
         except:
             pass
