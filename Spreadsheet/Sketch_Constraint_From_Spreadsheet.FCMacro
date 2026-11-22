@@ -23,13 +23,8 @@
 # ========================================================================
 # ========================================================================
 __Name__ = "Sketch Constraint From Spreadsheet"
-__Comment__ = (
-    "Macro Sketch Constraint From Spreadsheet: "
-    "Quickly add a fully dynamic length constraint to a sketch element, using a "
-    "spreadsheet cell alias or address, or link spreadsheet values to "
-    "object properties. "
-    "The macro can also create aliases automatically."
-)
+# Addon Manager reads metadata line by line : keep each value on a single line
+__Comment__ = "Macro Sketch Constraint From Spreadsheet: Quickly add a fully dynamic length constraint to a sketch element, using a spreadsheet cell alias or address, or link spreadsheet values to object properties. The macro can also create aliases automatically."  # noqa: E501
 __Author__ = "2cv001"
 __Title__ = "Macro Sketch Constraint From Spreadsheet"
 __Date__ = "2026/11/22 15:38"  # YYYY/MM/DD
