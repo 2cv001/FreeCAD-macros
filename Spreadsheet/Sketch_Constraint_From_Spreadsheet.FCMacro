@@ -2344,25 +2344,24 @@ def main():
                 == QtGui.QMessageBox.Ok
         ):
             # if user  want
-            mySketch.renameConstraint(
-                indexConstraint,
-                mySketch.Name
-                + "_"
-                + str(indexConstraint)
-                + "_"
-                + datetime.now().strftime("%S"),
+            if mySketch.Constraints[indexConstraint].Name == "":
+                # nommer la contrainte
+                mySketch.renameConstraint(
+                    indexConstraint,
+                    mySketch.Name
+                    + "_"
+                    + str(indexConstraint)
+                    + "_"
+                    + datetime.now().strftime("%S"),
+                )
+            mySpreadsheet.set(
+                cellCode,
+                "=href("
+                + mySketch.Name
+                + ".Constraints."
+                + mySketch.Constraints[indexConstraint].Name
+                + ")",
             )
-
-        # nommer la contrainte
-        # mySpreadsheet.touch()
-        mySpreadsheet.set(
-            cellCode,
-            "=href("
-            + mySketch.Name
-            + ".Constraints."
-            + mySketch.Constraints[indexConstraint].Name
-            + ")",
-        )
 
     # put Sketch window ahead
     activateSketchEditingWindow()
