@@ -180,8 +180,8 @@ messages = {
                             + "en utilisant le texte de ces cellules sélectionnées."
                             + "\n\nA moins que vous souhaitiez modofier directement une propriété dans l'arbre. "
                             + " \n En ce cas sortez du mode d'édition du Sketch.",
-        "NoActiveSpreadsheet": "Pas de cellule sélectionnée dans un spreadsheet actif."
-                               + "\nSélectionnez un objet dans un sketch, puis sélectionnez une cellule dans un spreadsheet.",
+        "NoActiveSpreadsheet": "Aucun tableur ouvert."
+                               + "\nSélectionnez un objet dans le sketch, puis une cellule dans un tableur.",
         "ConstarintConflicDetected": "Détection de conflit dans les contraintes. Annulation de la création de la conrainte ?",
         "getConstraintTypeAliasToolTip": "Si coché, l'alias sera automatiquement créé lors de l'éxécution de la macro."
                                          + "\nLes Alias seront créés à droite des cellules avec texte. Les cellules avec texte sont celle ci et en dessous : ",
@@ -263,8 +263,8 @@ messages = {
                             + "using the text of these selected cells?"
                             + "\n\nUnless you wish to directly modify a property in the tree."
                             + "\nIn that case, exit the Sketch editing mode.",
-        "NoActiveSpreadsheet": "No active spreadsheet with selected cells."
-                               + "\nSelect objects in sketch, and then select a cell in spreadsheet.",
+        "NoActiveSpreadsheet": "No spreadsheet open."
+                               + "\nSelect objects in the sketch, then select a cell in a spreadsheet.",
         "ConstarintConflicDetected": "Constraints conflic detected. Cancel constraint creation?",
         "getConstraintTypeAliasToolTip": "If checked, alias will automatically be created during each macro execution."
                                          + "\nAlias will be built for the right cells from the text in this cell and under.",
@@ -1209,7 +1209,38 @@ def nextCell(cell):
     return colonne_suivante + ligne
 
 
-def setAlias(aliasCellsSelect, aliasAuto):
+##########################################
+# Spreadsheet view to use (its sheet and its selected cells) :
+# - the active view if it is a spreadsheet
+# - else (ex : the sketch has the focus) the spreadsheet of the active document
+#   that had the focus most recently
+# - None if no spreadsheet is open
+##########################################
+def findSpreadsheetView():
+    doc = Gui.ActiveDocument
+    if doc is None:
+        return None
+    if hasattr(doc.ActiveView, "getSheet"):  # the active view is a spreadsheet
+        return doc.ActiveView
+    sheetViews = doc.mdiViewsOfType("SpreadsheetGui::SheetView")
+    if len(sheetViews) <= 1:
+        return sheetViews[0] if sheetViews else None
+    # several spreadsheets : the one whose window had the focus most recently
+    mdiArea = Gui.getMainWindow().centralWidget()
+    try:
+        order = QtGui.QMdiArea.WindowOrder.ActivationHistoryOrder  # Qt6
+    except AttributeError:
+        order = QtGui.QMdiArea.ActivationHistoryOrder  # Qt5
+    for win in reversed(mdiArea.subWindowList(order)):  # most recent first
+        titleParts = [p.strip() for p in win.windowTitle().replace("[*]", "").split(" : ")]
+        for view in sheetViews:
+            if view.getSheet().Label in titleParts:
+                return view
+    return sheetViews[0]
+
+
+def setAlias(aliasCellsSelect, aliasAuto, sheetView=None):
+    # sheetView : spreadsheet view to use, found by findSpreadsheetView() if not given
     # If the user wants to trigger the creation of alias
     # it is sufficient that he does not select any objects in the Sketch
     # but select cells containing strings in the left hand column
@@ -1217,18 +1248,19 @@ def setAlias(aliasCellsSelect, aliasAuto):
     # so test if an object is selected :
     # result : False if macro can continue.
 
-    try:
-        mySpreadsheet = Gui.ActiveDocument.ActiveView.getSheet()
-    except AttributeError:  # no document, or active view is not a spreadsheet
+    if sheetView is None:
+        sheetView = findSpreadsheetView()
+    if sheetView is None:  # no spreadsheet open
         QtGui.QMessageBox.warning(
             Gui.getMainWindow(),
             messages[language]["Warning"],
             messages[language]["NoActiveSpreadsheet"],
         )
         return True
+    mySpreadsheet = sheetView.getSheet()
 
     # To get list of all selected cells
-    sel_items = Gui.activeView().selectedCells()
+    sel_items = sheetView.selectedCells()
     # sel_items est un tableau sous la forme ['C4', 'C5', 'C6', 'C7', 'D6', 'D7', 'E4', 'E5', 'E6', 'E7']
 
     tabCells = []
@@ -1955,17 +1987,16 @@ def main():
             setAlias(True, False)
             return
 
-    try:
-        mySpreadsheet = Gui.ActiveDocument.ActiveView.getSheet()
-    except AttributeError:  # no document, or active view is not a spreadsheet
-
+    # spreadsheet : the active view, or the last active spreadsheet if the sketch has the focus
+    sheetView = findSpreadsheetView()
+    if sheetView is None:  # no spreadsheet open
         QtGui.QMessageBox.warning(
             Gui.getMainWindow(),
             messages[language]["Warning"],
             messages[language]["NoActiveSpreadsheet"],
         )
-
         return True
+    mySpreadsheet = sheetView.getSheet()
 
     # Sketch in edit mode, or object (Pad, Pocket...) whose property is selected in the tree
     # (the selection is not empty here : an empty selection is handled above)
@@ -1978,7 +2009,7 @@ def main():
         mySketch = None
         myPadOrPocket = sels[0].Object  # object owner of property
 
-    # Part SpreadSheet (mySpreadsheet : the active view, checked above)
+    # Part SpreadSheet (sheetView / mySpreadsheet : found above)
     # ---------------------------------
     sheets = getGuiObjsSelect("Spreadsheet::Sheet")
     for sheet in sheets:
@@ -1986,10 +2017,10 @@ def main():
     mySpreadSheetName = mySpreadsheet.Name
     mySpreadSheetLabel = mySpreadsheet.Label
 
-    ###### able to retrieve the selected cell : #####
-    # retrieve the selected cell
-
-    cellCode = Gui.activeView().currentIndex()
+    # retrieve the selected cell (it may have been selected a while ago if the
+    # spreadsheet does not have the focus : show it in the report view)
+    cellCode = sheetView.currentIndex()
+    print("Spreadsheet cell used:", mySpreadSheetLabel + "." + cellCode)
 
     try:
         if sels[0].Object.TypeId not in ["Part::Part2DObjectPython"]:  # ShapeString
@@ -2032,7 +2063,7 @@ def main():
             p1, p2 = orderPoints(myConstraint, p1, p2)
 
     if getIniCheckboxStateForAlias():
-        setAlias(False, True)
+        setAlias(False, True, sheetView)  # same spreadsheet as the cell
 
     # create constraint
     # =================================
