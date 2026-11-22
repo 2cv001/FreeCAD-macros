@@ -1510,10 +1510,44 @@ def activateSketchEditingWindow():
 
 
 ######################################################################################
+# Helpers for featuresObjSelected
+######################################################################################
+CIRCLE_TYPES = ("Part::GeomCircle", "Part::GeomArcOfCircle")
+
+
+# 'Edge12' -> ('Edge', 12)    'ExternalEdge3' -> ('ExternalEdge', 3)
+def splitName(name):
+    letters, digits = ["".join(c) for _, c in itertools.groupby(name, str.isalpha)]
+    return letters, int(digits)
+
+
+# Geometry of the active sketch (geoIndex >= 0)
+# or external geometry from another sketch (geoIndex <= -3, Sketcher convention)
+def geometryOf(mySketch, geoIndex, tabExternalGeometry):
+    if geoIndex >= 0:
+        return mySketch.Geometry[geoIndex]
+    externalSketchName, externalGeometryName = tabExternalGeometry[-geoIndex - 3]
+    numExtGeometry = splitName(externalGeometryName)[1]
+    return App.ActiveDocument.getObject(externalSketchName).Geometry[numExtGeometry - 1]
+
+
+# Coordinates of the start (1), end (2) or center (3) of a geometry.
+# A point has only one position. (0, 0) if the geometry has no such position.
+def pointOf(geo, pos):
+    if geo.TypeId == "Part::GeomPoint":
+        return geo.X, geo.Y
+    attribute = {1: "StartPoint", 2: "EndPoint", 3: "Center"}.get(pos)
+    if attribute and hasattr(geo, attribute):
+        point = getattr(geo, attribute)
+        return point.x, point.y
+    return 0, 0
+
+
+######################################################################################
 # to get necessary values for the constraint
 # Parameters :
 # sel : selection of objects (a line, 2 points..).
-# numOrdreObjSelected if we want the first objetc selected or the second.
+# numOrdreObjSelected if we want the first object selected or the second.
 # indexExtremite if we want the start point (1) or the end point (2), if exist, of the sel
 # return features of a point
 # - typeIdGeometry : Part::GeomLineSegment ....
@@ -1521,203 +1555,72 @@ def activateSketchEditingWindow():
 # - indexObjectHavingPoint index of the object having the point (line...)
 # - indexExtremiteLine index of the ends (points) of the line (= start point or end point)
 # - x, y : coordinates of the point
-# - isInternalObject : True if the objetct is on the active sketch
+# - isInternalObject : True if the object is on the active sketch
 #####################################################################################
 def featuresObjSelected(mySketch, sel, numOrdreObjSelected, indexExtremite):
-    indexExtremiteLine = 1
-    indexObjectHavingPoint = -10
-    typeIdGeometry = None
-    x, y = 0, 0
-    isInternalObject = True
+    nbSelected = len(sel.SubElementNames)
     itemName = sel.SubElementNames[numOrdreObjSelected]  # ex Edge5 ( line)
 
-    tabExternalGeomery = []
-    for item in mySketch.ExternalGeometry:
-        for objName in item[1]:
-            # to get something like
-            # [('Sketch', 'Edge2'), ('Sketch001', 'Edge2'), ('Sketch001', 'Edge1'), ('Sketch', 'Edge1')]
-            tabExternalGeomery.append((item[0].Name, objName))
+    # to get something like
+    # [('Sketch', 'Edge2'), ('Sketch001', 'Edge2'), ('Sketch001', 'Edge1'), ('Sketch', 'Edge1')]
+    tabExternalGeometry = [
+        (item[0].Name, objName)
+        for item in mySketch.ExternalGeometry
+        for objName in item[1]
+    ]
 
     if itemName in ["V_Axis", "H_Axis", "RootPoint"]:
-        typeInSubElementName = itemName
         # Axes and origin are all handled as the origin point (-1, 1):
         # a DistanceX from the origin is the same as a distance from V_Axis,
         # a DistanceY from the origin is the same as a distance from H_Axis.
-        indexObjectHavingPoint = -1
-        typeIdGeometry = "Part::GeomPoint"
-        x, y = 0, 0
-    else:
-        typeInSubElementName, numInNameStr = [
-            "".join(c) for _, c in itertools.groupby(itemName, str.isalpha)
-        ]
-        numInName = int(numInNameStr)
+        return "Part::GeomPoint", itemName, -1, 1, 0, 0, True
 
-    # only one selected object
-    if (
-            typeInSubElementName == "Edge" and len(sel.SubElementNames) == 1
-    ):  # selection is only one line
-        indexObjectHavingPoint = numInName - 1
-        indexExtremiteLine = indexExtremite
-        typeIdGeometry = mySketch.Geometry[indexObjectHavingPoint].TypeId
-        # typeIdGeometry : 'Part::GeomCircle' or 'Part::GeomLineSegment'
-        if typeIdGeometry in ["Part::GeomLineSegment"]:
-            if indexExtremite == 1:
-                x = mySketch.Geometry[indexObjectHavingPoint].StartPoint.x
-                y = mySketch.Geometry[indexObjectHavingPoint].StartPoint.y
-            elif indexExtremite == 2:
-                x = mySketch.Geometry[indexObjectHavingPoint].EndPoint.x
-                y = mySketch.Geometry[indexObjectHavingPoint].EndPoint.y
+    typeInSubElementName, numInName = splitName(itemName)
+    typeIdGeometry = None
+    indexObjectHavingPoint = -10
+    indexExtremiteLine = 1
+    x, y = 0, 0
+    isInternalObject = True
 
-    if typeInSubElementName == "ExternalEdge":
+    if typeInSubElementName == "Edge":  # line, circle... of the active sketch
+        geoIndex = numInName - 1
+        geo = mySketch.Geometry[geoIndex]
+        typeIdGeometry = geo.TypeId
+        if nbSelected == 1:  # the whole line (or circle)
+            indexObjectHavingPoint = geoIndex
+            indexExtremiteLine = indexExtremite
+            if typeIdGeometry == "Part::GeomLineSegment":
+                x, y = pointOf(geo, indexExtremite)
+        elif typeIdGeometry in CIRCLE_TYPES:  # circle + point : the center of the circle
+            indexObjectHavingPoint = geoIndex
+            indexExtremiteLine = 3  # 3 for center
+            x, y = pointOf(geo, 3)
+
+    elif typeInSubElementName == "ExternalEdge":  # line, circle... of another sketch
         isInternalObject = False
         indexObjectHavingPoint = -numInName - 2
         indexExtremiteLine = indexExtremite
-        externalSketchName, externalGeometryName = tabExternalGeomery[numInName - 1]
-        iTypeExternal, iNumStr = [
-            "".join(c) for _, c in itertools.groupby(externalGeometryName, str.isalpha)
-        ]
-        iNumExtGeometry = int(iNumStr)
-        typeIdGeometry = (
-            App.ActiveDocument.getObject(externalSketchName)
-            .Geometry[iNumExtGeometry - 1]
-            .TypeId
-        )
-
-        if len(sel.SubElementNames) == 1:
-            if typeIdGeometry == "Part::GeomLineSegment":
-                if indexExtremite == 1:
-                    x = (
-                        App.ActiveDocument.getObject(externalSketchName)
-                        .Geometry[iNumExtGeometry - 1]
-                        .StartPoint.x
-                    )
-                    y = (
-                        App.ActiveDocument.getObject(externalSketchName)
-                        .Geometry[iNumExtGeometry - 1]
-                        .StartPoint.y
-                    )
-                elif indexExtremite == 2:
-                    x = (
-                        App.ActiveDocument.getObject(externalSketchName)
-                        .Geometry[iNumExtGeometry - 1]
-                        .EndPoint.x
-                    )
-                    y = (
-                        App.ActiveDocument.getObject(externalSketchName)
-                        .Geometry[iNumExtGeometry - 1]
-                        .EndPoint.y
-                    )
-
-        if typeIdGeometry in ["Part::GeomCircle", "Part::GeomArcOfCircle"]:
-            x = (
-                App.ActiveDocument.getObject(externalSketchName)
-                .Geometry[iNumExtGeometry - 1]
-                .Center.x
-            )
-            y = (
-                App.ActiveDocument.getObject(externalSketchName)
-                .Geometry[iNumExtGeometry - 1]
-                .Center.y
-            )
+        geo = geometryOf(mySketch, indexObjectHavingPoint, tabExternalGeometry)
+        typeIdGeometry = geo.TypeId
+        if typeIdGeometry in CIRCLE_TYPES:
             indexExtremiteLine = 3  # 3 for center
+            x, y = pointOf(geo, 3)
+        elif typeIdGeometry == "Part::GeomLineSegment" and nbSelected == 1:
+            x, y = pointOf(geo, indexExtremite)
 
-    # We selected an internal circle but for center (two objects selected)
-    if typeInSubElementName == "Edge" and len(sel.SubElementNames) == 2:
-        typeIdGeometry = mySketch.Geometry[numInName - 1].TypeId
-        if typeIdGeometry in ["Part::GeomCircle", "Part::GeomArcOfCircle"]:
-            indexObjectHavingPoint = numInName - 1
-            x = mySketch.Geometry[indexObjectHavingPoint].Location.x
-            y = mySketch.Geometry[indexObjectHavingPoint].Location.y
-            indexExtremiteLine = 3  # 3 for center
-
-    # We selected a vertex
-    if (
-            typeInSubElementName == "Vertex"
-    ):  # selection is 2 points. sel is a vertex (a point of a line) :
+    elif typeInSubElementName == "Vertex":  # a point, internal or external
         indexObjectHavingPoint, indexExtremiteLine = sel.Object.getGeoVertexIndex(
             numInName - 1
         )
+        isInternalObject = indexObjectHavingPoint >= 0
+        geo = geometryOf(mySketch, indexObjectHavingPoint, tabExternalGeometry)
+        typeIdGeometry = geo.TypeId
+        x, y = pointOf(geo, indexExtremiteLine)
 
-        if indexObjectHavingPoint >= 0:  # internal vertex
-            typeIdGeometry = mySketch.Geometry[indexObjectHavingPoint].TypeId
-            if (
-                    mySketch.Geometry[indexObjectHavingPoint].TypeId
-                    == "Part::GeomLineSegment"
-            ):
-                if indexExtremiteLine == 1:
-                    x = mySketch.Geometry[indexObjectHavingPoint].StartPoint.x
-                    y = mySketch.Geometry[indexObjectHavingPoint].StartPoint.y
-                if indexExtremiteLine == 2:
-                    x = mySketch.Geometry[indexObjectHavingPoint].EndPoint.x
-                    y = mySketch.Geometry[indexObjectHavingPoint].EndPoint.y
-            if mySketch.Geometry[indexObjectHavingPoint].TypeId == "Part::GeomPoint":
-                x = mySketch.Geometry[indexObjectHavingPoint].X
-                y = mySketch.Geometry[indexObjectHavingPoint].Y
-            # we select a vertex Circle (so the center)
-            if mySketch.Geometry[indexObjectHavingPoint].TypeId in [
-                "Part::GeomCircle",
-                "Part::GeomArcOfCircle",
-            ]:
-                x = mySketch.Geometry[indexObjectHavingPoint].Location.x
-                y = mySketch.Geometry[indexObjectHavingPoint].Location.y
-
-        if indexObjectHavingPoint < 0:  # external vertex = vertex of another sketch
-            isInternalObject = False
-            externalSketchName, externalGeometryName = tabExternalGeomery[
-                -indexObjectHavingPoint - 3
-                ]
-
-            iType, iNumStr = [
-                "".join(c)
-                for _, c in itertools.groupby(externalGeometryName, str.isalpha)
-            ]
-            iNumExtGeometry = int(iNumStr)
-            typeExternal = (
-                App.ActiveDocument.getObject(externalSketchName)
-                .Geometry[iNumExtGeometry - 1]
-                .TypeId
-            )
-            typeIdGeometry = typeExternal
-
-            if typeExternal == "Part::GeomLineSegment":
-                if indexExtremiteLine == 1:
-                    x = (
-                        App.ActiveDocument.getObject(externalSketchName)
-                        .Geometry[iNumExtGeometry - 1]
-                        .StartPoint.x
-                    )
-                    y = (
-                        App.ActiveDocument.getObject(externalSketchName)
-                        .Geometry[iNumExtGeometry - 1]
-                        .StartPoint.y
-                    )
-                if indexExtremiteLine == 2:
-                    x = (
-                        App.ActiveDocument.getObject(externalSketchName)
-                        .Geometry[iNumExtGeometry - 1]
-                        .EndPoint.x
-                    )
-                    y = (
-                        App.ActiveDocument.getObject(externalSketchName)
-                        .Geometry[iNumExtGeometry - 1]
-                        .EndPoint.y
-                    )
-            if typeExternal == "Part::GeomCircle":
-                x = (
-                    App.ActiveDocument.getObject(externalSketchName)
-                    .Geometry[iNumExtGeometry - 1]
-                    .Center.x
-                )
-                y = (
-                    App.ActiveDocument.getObject(externalSketchName)
-                    .Geometry[iNumExtGeometry - 1]
-                    .Center.y
-                )
-
-    if typeInSubElementName == "Constraint" and len(sel.SubElementNames) == 1:
-        indexConstraint = numInName - 1
-        indexObjectHavingPoint = indexConstraint
+    elif typeInSubElementName == "Constraint" and nbSelected == 1:
+        indexObjectHavingPoint = numInName - 1  # index of the constraint
         typeIdGeometry = "Constraint"
+
     return (
         typeIdGeometry,
         typeInSubElementName,
