@@ -1710,9 +1710,10 @@ def apply_to_property(obj, cellExpression, propertyInfo=None):
     if propertyPath == "":
         print("Selection not allowed")
         return False
-    if propertyType in [bool, "setOf"]:
-        print("Boolean and multi values are not editable by the macro." +
-              "It will be possible in a next version")
+    # Booleans are allowed (cell 0 = unchecked, 1 = checked).
+    # Greyed / read only properties are refused below, whatever their type.
+    if propertyType == "setOf":
+        print(propertyName, ": multi values properties are not editable by the macro.")
         return False
     if not (propertyEditable and propertyEnabled):
         print(propertyName, 'property not editable in this context. Make it editable beforehand.')
