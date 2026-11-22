@@ -171,11 +171,6 @@ messages = {
                                     + "Sélectionnez 1 ligne, 1 cercle, 2 points ou une contrainte dans un sketch "
                                     + "avant de sélectionner une cellule du tableur.",
         "SelectTwoNotPoints": "2 objets sont sélectionnés, mais ce ne sont pas 2 points.",
-        "SelectInSketchEdit": "Sélectionnez un objet (point, ligne...) dans le sketch en mode édition.",
-        "HowToUse": "1- Sélectionnez une ligne ou 2 points"
-                    + "\n 2- allez dans un tableur"
-                    + "\n 3- sélectionnez la cellule contenant la valeur"
-                    + "\n 4- restez dans le tableur et lancez la macro",
         "ActivateWindowTitle": "Activation de la fenêtre",
         "NoActiveDocument": "Pas de document actif.",
         "No3DView": "Pas de vue 3D ouverte pour le document actif.",
@@ -259,11 +254,6 @@ messages = {
                                     + "Select 1 line, 1 circle, 2 points or a constraint in a sketch "
                                     + "before selecting a cell in the spreadsheet.",
         "SelectTwoNotPoints": "2 objects are selected, but they are not 2 points.",
-        "SelectInSketchEdit": "Select an object (point, line...) in the sketch in edit mode.",
-        "HowToUse": "1- Select a line or 2 points"
-                    + "\n 2- go to a spreadsheet"
-                    + "\n 3- select the cell containing the value"
-                    + "\n 4- stay in the spreadsheet and launch the macro",
         "ActivateWindowTitle": "Activate window",
         "NoActiveDocument": "No active document.",
         "No3DView": "No 3D view opened for the active document.",
@@ -1977,44 +1967,22 @@ def main():
 
         return True
 
-    # If we select a Pad, Pocket... not in edition mode and a cell
+    # Sketch in edit mode, or object (Pad, Pocket...) whose property is selected in the tree
+    # (the selection is not empty here : an empty selection is handled above)
     # --------------------------------------------------------------
-    myPadOrPocket = None
-
-    try:
-        sels = Gui.Selection.getSelectionEx()
-        if not isSketchActif():
-            myPadOrPocket = sels[0].Object  # object owner of property
-    except IndexError:  # nothing selected
-        pass
-
-    try:
+    sels = Gui.Selection.getSelectionEx()
+    if isSketchActif():
         mySketch = ActiveSketch
-    except NameError:  # no sketch in edit mode
-        if myPadOrPocket == None:
-            QtGui.QMessageBox.information(
-                None,
-                messages[language]["Warning"],
-                messages[language]["SelectInSketchEdit"],
-            )
-            # activateSketchEditingWindow()
-            return
+        myPadOrPocket = None
+    else:
+        mySketch = None
+        myPadOrPocket = sels[0].Object  # object owner of property
 
-    # Part SpreadSheet
+    # Part SpreadSheet (mySpreadsheet : the active view, checked above)
     # ---------------------------------
     sheets = getGuiObjsSelect("Spreadsheet::Sheet")
     for sheet in sheets:
         Gui.Selection.removeSelection(App.ActiveDocument.Name, sheet.Name)
-    try:
-        mySpreadsheet = Gui.ActiveDocument.ActiveView.getSheet()
-    except AttributeError:  # no document, or active view is not a spreadsheet
-        QtGui.QMessageBox.information(
-            None,
-            messages[language]["Warning"],
-            messages[language]["HowToUse"],
-        )
-        activateSketchEditingWindow()
-        return
     mySpreadSheetName = mySpreadsheet.Name
     mySpreadSheetLabel = mySpreadsheet.Label
 
