@@ -1203,11 +1203,12 @@ def traitementChaineSource(chaineSource, separateur, nouveauCaract, majuscule):
         if not (first):
             carctDeSeparation = nouveauCaract
         if majuscule:
-            chaineResult = chaineResult + nouveauCaract + mots[:1].upper() + mots[1:]
+            chaineResult = chaineResult + carctDeSeparation + mots[:1].upper() + mots[1:]
             # We use "[:1]" instead of "[0]",
             # for no crash in case of an empty string (which happens if the cell is empty)
         else:
-            chaineResult = chaineResult + nouveauCaract + mots
+            chaineResult = chaineResult + carctDeSeparation + mots
+        first = False
     if premierCaractereEnMinuscule:
         chaineResult = chaineResult[:1].lower() + chaineResult[1:]
     return chaineResult
