@@ -1692,6 +1692,40 @@ def build_expression(spreadsheetLabel, cellCode, cellAlias, divideBy2):
 
 
 ##########################################
+# Link the property selected in the property view (ex Length of a Pad)
+# to the cell expression.
+# Parameters :
+# - obj : object owning the property (Pad, Pocket...)
+# - cellExpression : ex '<<datas>>.longueur'
+# - propertyInfo : result of propertyParentObjectAndpropertyNameInTreeView(),
+#   read from the property view if not given
+# return : True if the property has been linked
+##########################################
+def apply_to_property(obj, cellExpression, propertyInfo=None):
+    if propertyInfo is None:
+        propertyInfo = propertyParentObjectAndpropertyNameInTreeView()
+    (propertyName, propertyPath, propertyType,
+     _objectName, _objectType, propertyEditable, propertyEnabled) = propertyInfo
+
+    if propertyPath == "":
+        print("Selection not allowed")
+        return False
+    if propertyType in [bool, "setOf"]:
+        print("Boolean and multi values are not editable by the macro." +
+              "It will be possible in a next version")
+        return False
+    if not (propertyEditable and propertyEnabled):
+        print(propertyName, 'property not editable in this context. Make it editable beforehand.')
+        return False
+    try:
+        obj.setExpression(propertyPath, cellExpression)
+    except Exception as e:  # on purpose : RuntimeError, ParserError, AttributeError...
+        print("No property selected, or property not editable :", e)
+        return False
+    return True
+
+
+##########################################
 # Main proceddure
 ##########################################
 def main():
@@ -1990,25 +2024,8 @@ def main():
         ),
     )
 
-    if myPadOrPocket != None:
-        propertyName, propertyNameCompleteStrDico, propertyType, objectName, objectType, property_editable, property_enabled, = (
-            propertyParentObjectAndpropertyNameInTreeView()
-        )
-        if propertyNameCompleteStrDico == "":
-            print("Selection not allowed")
-            return
-        if propertyType in [bool, "setOf"]:
-            print("Boolean and multi values are not editable by the macro." +
-                  "It will be possible in a next version")
-            return
-        if not (property_editable and property_enabled):
-            print(propertyName, 'property not editable in this context. Make it editable beforehand.')
-            return
-        try:
-            myPadOrPocket.setExpression(propertyNameCompleteStrDico, cellExpression)
-        except Exception as e:  # on purpose : RuntimeError, ParserError, AttributeError...
-            print("No property selected, or property not editable :", e)
-            return
+    if myPadOrPocket is not None:
+        apply_to_property(myPadOrPocket, cellExpression)
         return
 
     # create constraint for internal or external circle
