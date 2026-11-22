@@ -1704,8 +1704,11 @@ def featuresObjSelected(mySketch, sel, numOrdreObjSelected, indexExtremite):
 
     if itemName in ["V_Axis", "H_Axis", "RootPoint"]:
         typeInSubElementName = itemName
+        # Axes and origin are all handled as the origin point (-1, 1):
+        # a DistanceX from the origin is the same as a distance from V_Axis,
+        # a DistanceY from the origin is the same as a distance from H_Axis.
         indexObjectHavingPoint = -1
-        typeIdGeometry = mySketch.Geometry[indexObjectHavingPoint].TypeId
+        typeIdGeometry = "Part::GeomPoint"
         x, y = 0, 0
     else:
         typeInSubElementName, numInNameStr = [
@@ -2136,19 +2139,11 @@ def main():
     # --------------------------------------
     # line or points have been selected have a look if we need to swap points
     # -------------------------------------
+    # (two objects: already validated above as 2 points or circle + point)
     if (
             len(sels[0].SubElementNames) == 1
             and typeIdGeometry1 in ["Part::GeomLineSegment"]
-    ) or (
-            len(sels[0].SubElementNames) == 2
-            and typeIdGeometry1
-            in [
-                "Part::GeomLineSegment",
-                "Part::GeomCircle",
-                "Part::GeomArcOfCircle",
-                "Part::GeomPoint",
-            ]
-    ):
+    ) or len(sels[0].SubElementNames) == 2:
 
         # to give focus on the good button
         # (Button DistanceX if the two points are more horizontal than vertical)
