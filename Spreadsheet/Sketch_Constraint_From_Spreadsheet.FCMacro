@@ -198,6 +198,57 @@ messages = {
                                               + "\nmais que le sketch nécessite une contrainte sur le rayon. Utile notamment pour les fonctions de révolution.",
         "getConstraintTypeRadioRadius": "Oui (/ 2)",
         "getConstraintTypeRadioDiameter": "Non (inchangé)",
+        "PropNoneSelected": "Aucune propriété de {obj} n'est sélectionnée dans la fenêtre des propriétés."
+                            + "\n\nCliquez sur la propriété à lier (ex : Length, ou Placement > Position > x), "
+                            + "puis relancez la macro.",
+        "PropHasSubItems": "{path} contient plusieurs valeurs."
+                           + "\n\nDépliez-la et sélectionnez une seule valeur (ex : x, y ou z).",
+        "PropNotEditable": "{path} n'est pas modifiable dans ce contexte (propriété grisée)."
+                           + "\n\nRendez-la modifiable avant de lancer la macro."
+                           + "\n(ex : pour un sketch attaché, utilisez Attachment Offset au lieu de Placement)",
+        "PropLinkFailed": "Impossible de lier {path} à {expr} :\n\n{error}",
+        "PropAlreadyLinked": "{path} est déjà liée par l'expression :\n\n    {old}\n\nQue voulez-vous faire ?",
+        "PropAlreadyLinkedNoSheet": "{path} est liée par l'expression :\n\n    {old}"
+                                    + "\n\nAucun tableur n'est ouvert : la macro peut seulement supprimer ce lien."
+                                    + "\n\nPour lier la propriété à une autre cellule, ou pour les autres "
+                                    + "fonctions de la macro, ouvrez un tableur, sélectionnez une cellule "
+                                    + "et relancez la macro.",
+        "PropReplaceLink": "&Remplacer par la cellule sélectionnée",
+        "PropRecomputeError": "FreeCAD a détecté une erreur après la liaison de {path} à {expr} :"
+                              + "\n\n{errors}"
+                              + "\n\nRevenir en arrière (remettre {old}) ?",
+        "PropRestoreFailed": "Impossible de remettre l'ancienne valeur de {path} :\n\n{error}"
+                             + "\n\nUtilisez Édition > Annuler (Ctrl+Z).",
+        "CellEmpty": "La cellule {cell} est vide ou contient une erreur."
+                     + "\n\nMettez-y une valeur avant de la lier à {path}.",
+        "CellTextForNumber": "La cellule {cell} contient du texte ({value}), mais {path} attend un nombre."
+                             + "\n\nLiaison refusée.",
+        "CellUnitMismatch": "L'unité de la cellule {cell} ({cellUnit}) ne correspond pas "
+                            + "à celle de {path} ({propertyUnit})."
+                            + "\n\nLiaison refusée.",
+        "CellTextForBool": "La cellule {cell} contient du texte ({value}), mais {path} est une case à cocher : "
+                           + "elle attend 0 (décochée) ou 1 (cochée)."
+                           + "\n\nLiaison refusée.",
+        "CellEnumText": "La cellule {cell} contient « {value} », qui n'est pas un choix possible pour {path}."
+                        + "\n\nChoix possibles (numéro : texte) :\n{choices}"
+                        + "\n\nLiaison refusée.",
+        "CellEnumIndex": "La cellule {cell} contient {value}, qui n'est pas un numéro de choix "
+                         + "pour {path} (de 0 à {last})."
+                         + "\n\nChoix possibles (numéro : texte) :\n{choices}"
+                         + "\n\nLiaison refusée.",
+        "PropRemoveLink": "&Supprimer le lien",
+        "PropBoolEnumWarning": "{path} est une case à cocher ou une liste de choix."
+                               + "\n\nLa lier à une cellule est FORTEMENT DÉCONSEILLÉ :"
+                               + "\n - une fois liée, la case ou la liste de la fenêtre des propriétés n'a plus "
+                               + "aucun effet, et ne permet pas de retirer le lien ;"
+                               + "\n - si la cellule est effacée ou déplacée, la propriété reste bloquée ;"
+                               + "\n - pour une liste, la cellule donne le numéro du choix (0 = premier), "
+                               + "numéro qui peut changer avec une autre version de FreeCAD."
+                               + "\n\nPour retirer le lien plus tard :"
+                               + "\n - relancez la macro en sélectionnant cette propriété : "
+                               + "elle proposera de supprimer le lien ;"
+                               + "\n - ou tapez dans la console Python :\n      {cmd}"
+                               + "\n\nLier quand même ?",
 
     },
     "English": {
@@ -280,6 +331,57 @@ messages = {
                                               + "\nradius constraint—particularly relevant for revolved geometries.",
         "getConstraintTypeRadioRadius": "Yes (/ 2)",
         "getConstraintTypeRadioDiameter": "No (unchanged)",
+        "PropNoneSelected": "No property of {obj} is selected in the property view."
+                            + "\n\nClick the property to link (ex: Length, or Placement > Position > x), "
+                            + "then run the macro again.",
+        "PropHasSubItems": "{path} contains several values."
+                           + "\n\nExpand it and select a single value (ex: x, y or z).",
+        "PropNotEditable": "{path} is not editable in this context (greyed property)."
+                           + "\n\nMake it editable before running the macro."
+                           + "\n(ex: for an attached sketch, use Attachment Offset instead of Placement)",
+        "PropLinkFailed": "Unable to link {path} to {expr}:\n\n{error}",
+        "PropAlreadyLinked": "{path} is already linked by the expression:\n\n    {old}\n\nWhat do you want to do?",
+        "PropAlreadyLinkedNoSheet": "{path} is linked by the expression:\n\n    {old}"
+                                    + "\n\nNo spreadsheet is open: the macro can only remove this link."
+                                    + "\n\nTo link the property to another cell, or for the other features "
+                                    + "of the macro, open a spreadsheet, select a cell "
+                                    + "and run the macro again.",
+        "PropReplaceLink": "&Replace by the selected cell",
+        "PropRecomputeError": "FreeCAD detected an error after linking {path} to {expr}:"
+                              + "\n\n{errors}"
+                              + "\n\nGo back (put back {old})?",
+        "PropRestoreFailed": "Unable to put back the previous value of {path}:\n\n{error}"
+                             + "\n\nUse Edit > Undo (Ctrl+Z).",
+        "CellEmpty": "The cell {cell} is empty or contains an error."
+                     + "\n\nPut a value in it before linking it to {path}.",
+        "CellTextForNumber": "The cell {cell} contains text ({value}), but {path} expects a number."
+                             + "\n\nLink refused.",
+        "CellUnitMismatch": "The unit of the cell {cell} ({cellUnit}) does not match "
+                            + "the unit of {path} ({propertyUnit})."
+                            + "\n\nLink refused.",
+        "CellTextForBool": "The cell {cell} contains text ({value}), but {path} is a check box: "
+                           + "it expects 0 (unchecked) or 1 (checked)."
+                           + "\n\nLink refused.",
+        "CellEnumText": "The cell {cell} contains \"{value}\", which is not a possible choice for {path}."
+                        + "\n\nPossible choices (number : text):\n{choices}"
+                        + "\n\nLink refused.",
+        "CellEnumIndex": "The cell {cell} contains {value}, which is not a choice number "
+                         + "for {path} (0 to {last})."
+                         + "\n\nPossible choices (number : text):\n{choices}"
+                         + "\n\nLink refused.",
+        "PropRemoveLink": "Re&move the link",
+        "PropBoolEnumWarning": "{path} is a check box or a list of choices."
+                               + "\n\nLinking it to a cell is STRONGLY DISCOURAGED:"
+                               + "\n - once linked, the check box or list in the property view has no effect "
+                               + "anymore, and gives no way to remove the link;"
+                               + "\n - if the cell is cleared or moved, the property stays locked;"
+                               + "\n - for a list, the cell gives the number of the choice (0 = first), "
+                               + "a number that may change with another FreeCAD version."
+                               + "\n\nTo remove the link later:"
+                               + "\n - run the macro again with this property selected: "
+                               + "it will offer to remove the link;"
+                               + "\n - or type in the Python console:\n      {cmd}"
+                               + "\n\nLink anyway?",
 
     },
 }
@@ -356,200 +458,145 @@ def validate_expression(expression):
         return False  # The expression is invalid
 
 
-# ------------------------------------------------
-# get selected property in treeView
-# select only one object and one or more property
-# ------------------------------------------------
-def selectedpropertyInTreeView():
-    # "" = do not change the property
-    # use a dico is necessary because it's not always the same "name property"  given by code
-    # index.data(QtCore.Qt.DisplayRole) and the "name property"
-    # for setExpression(propertyNameCompleteStrDico, cellExpression)
-    dicoName = {
-        "Placement.Position.x": "Placement.Base.x",
-        "Placement.Position.y": "Placement.Base.y",
-        "Placement.Position.z": "Placement.Base.z",
-        "Placement.Axederotation.x": "Placement.Rotation.Axis.x",
-        "Placement.Axederotation.y": "Placement.Rotation.Axis.y",
-        "Placement.Axederotation.z": "Placement.Rotation.Axis.z",
-        "AttachmentOffset.Position.x": ".AttachmentOffset.Base.x",
-        "AttachmentOffset.Position.y": ".AttachmentOffset.Base.y",
-        "AttachmentOffset.Position.z": ".AttachmentOffset.Base.z",
-        "AttachmentOffset.Axis.x": ".AttachmentOffset.Rotation.Axis.x",
-        "AttachmentOffset.Axis.y": ".AttachmentOffset.Rotation.Axis.y",
-        "AttachmentOffset.Axis.z": ".AttachmentOffset.Rotation.Axis.z",
-        "AttachmentOffset.Angle": ".AttachmentOffset.Rotation.Angle",
-        "AttachmentOffset.Axederotation.x": ".AttachmentOffset.Rotation.Axis.x",
-        "AttachmentOffset.Axederotation.y": ".AttachmentOffset.Rotation.Axis.y",
-        "AttachmentOffset.Axederotation.z": ".AttachmentOffset.Rotation.Axis.z",
-        "Placement.Axis.x": "Placement.Rotation.Axis.x",
-        "Placement.Axis.y": "Placement.Rotation.Axis.y",
-        "Placement.Axis.z": "Placement.Rotation.Axis.z",
-        "Placement.Angle": "Placement.Rotation.Angle",
-        "attachementAxisX": "AttachmentOffset.Rotation.Axis.x",
-        "attachementAxisY": "AttachmentOffset.Rotation.Axis.y",
-        "attachementAxisZ": "AttachmentOffset.Rotation.Axis.z",
-        "InternalGeometry.MakeInternals": "MakeInternals",
-        "Sketch.ArcFitTolerance": "ArcFitTolerance",
+# ===============================================================================
+# Property selected in the property view (ex : Placement > Position > x of a Pad)
+# selectedPropertyInPropertyView() and getPropertyValue() are shared with
+# SpreadsheetDependencyInspector.FCMacro : keep them identical in both macros.
+#
+# How it works (the property view has no Python API) :
+# - the rows of the property view are read with Qt (tree named "propertyEditorData")
+# - top rows are groups (Base, Attachment...), their children are the properties,
+#   and below come the sub-items (Position, x...)
+# - the internal name of the property is read in its tooltip ("Name: Placement"),
+#   because the displayed name is translated ("Axe de rotation" in French)
+# - sub-items have no tooltip : their displayed label is compared with the English
+#   label translated by FreeCAD, so it works whatever the FreeCAD language
+# - the path found is checked on the object before being returned
+# ===============================================================================
+SelectedProperty = namedtuple(
+    "SelectedProperty", "obj path name typeId value editable hasSubItems"
+)
+# obj         : object owning the property (Pad, Sketch...)
+# path        : path for obj.setExpression(), same format as obj.ExpressionEngine
+#               without the leading '.' (ex 'Placement.Rotation.Axis.x')
+# name        : internal name of the property (ex 'Placement')
+# typeId      : type of the property (ex 'App::PropertyPlacement')
+# value       : current value, read on the object with the path
+# editable    : the value is editable and not greyed in the property view
+# hasSubItems : the selected row has sub-items (ex Placement, Position) : link one of them
 
-    }
-    parentToRemove = [
-        "Attachment",
-        "Pad",
-        "Base",
-        "Sketch Based",
-        "Part Design",
-        "Draft",
-        "Experimental",
-        "Prism",
-        "Pocket",
-        'Hole',
-        "Limits",
-        "Side1",
-        "Side2",
-        "Link",
-    ]
-    try:
-        objectName = Gui.Selection.getSelection()[0].Name
-        objectType = Gui.Selection.getSelection()[0].TypeId
-    except IndexError:  # nothing selected
-        objectName = ""
-        objectType = ""
+# Sub-items whose internal path differs from the label shown by FreeCAD.
+# key : property type without 'App::Property' ; value : {English label : internal path}
+# Sub-items not listed (x, y, z, named constraints...) use their displayed label.
+PROPERTY_SUB_ITEMS = {
+    "Placement": {"Position": "Base", "Axis": "Rotation.Axis", "Angle": "Rotation.Angle"},
+    "Rotation": {"Axis": "Axis", "Angle": "Angle"},
+}
 
-    def has_parent(index):
-        return index.parent().isValid()
 
-    def extract_value_expression(string):
-        if (
-                not type(string) == str
-                or string.count("(") == 0
-                or string.count(")") == 0
-                or string.count("[") > 0
-        ):
-            return string, ""
-        string = str(string)
-        parts = string.split("(")
-        expression = parts[-1]
-        value = string.rpartition("(")[0].strip()
-        s = string.rpartition("(")[2]
-        expression = s.replace(")", "").strip()
-        return value, expression
+def getPropertyValue(obj, path):
+    # path : as in obj.ExpressionEngine, ex 'Length', '.Placement.Base.x',
+    #        'Constraints[3]' or 'Constraints.myName' (a sketch constraint object is returned)
+    # raise an exception (AttributeError, IndexError...) if the path does not exist
+    value = obj
+    for part in path.lstrip(".").split("."):
+        match = re.fullmatch(r"(\w+)\[(\d+)\]", part)
+        if match:  # ex Constraints[3]
+            value = getattr(value, match.group(1))[int(match.group(2))]
+        elif isinstance(value, (list, tuple)):  # ex Constraints.myName
+            value = next(v for v in value if getattr(v, "Name", None) == part)
+        else:
+            value = getattr(value, part)
+    return value
 
-    propertyName = ""
-    propertyNameCompleteStr = ""
-    propertyParents = []
-    propertyTip = ""
-    propertyValue = ""
-    propertyExpression = ""
-    propertyType = ""
-    property_editable = False
-    property_enabled = True
 
-    trees = Gui.getMainWindow().findChildren(QtGui.QTreeView)
+def setPropertyValue(obj, path, value):
+    # path : as for getPropertyValue, without constraints (ex 'Length', 'Placement.Base.x')
+    # In Python, sub-values (obj.Placement, .Base...) are copies : the chain of copies is
+    # modified from the end, then assigned back up to the object.
+    parts = path.lstrip(".").split(".")
+    chain = [obj]
+    for part in parts[:-1]:
+        chain.append(getattr(chain[-1], part))
+    setattr(chain[-1], parts[-1], value)
+    for i in range(len(parts) - 1, 0, -1):
+        setattr(chain[i - 1], parts[i - 1], chain[i])
 
-    for tree in trees:
-        n = 0
-        for index in tree.selectedIndexes():
-            n = n + 1
-            if (
-                    isinstance(index, QtCore.QModelIndex)
-                    and index.isValid()
-                    and index.model() is not None
-            ):
-                data = index.data(QtCore.Qt.DisplayRole)  # data is an str or boolean
-                if tree.objectName() == "propertyEditorData":  # t == 2:
-                    if n == 1:
-                        propertyName = data
-                        itemData = index.model().itemData(index)
-                        if itemData != {}:
-                            if 0 in itemData:
-                                if n == 1:
-                                    propertyParents = [itemData[0]]
-                                    parent = index.parent()
-                                    propertyParents.append(parent.data())
-                                    while has_parent(parent):
-                                        parent = parent.parent()
-                                        propertyParents.append(parent.data())
-                                    del propertyParents[
-                                        0
-                                    ]  # the first element is the propertyName, not a parent
 
-                    if n == 2:
-                        propertyType = type(data)
-                        if type(data) == str:
-                            if data.startswith("[") and data.endswith("]"):
-                                propertyType = "setOf"
-                        propertyValue, propertyExpression = (
-                            extract_value_expression(data)
-                        )
-                        tip = index.data(QtCore.Qt.ToolTipRole)
-                        propertyTip = tip
-                        property_editable = bool(index.flags() & QtCore.Qt.ItemIsEditable)
-                        property_enabled = bool(index.flags() & QtCore.Qt.ItemIsEnabled)
+def selectedPropertyInPropertyView(obj=None):
+    # obj : object owning the property (default : the single object selected in the tree)
+    # return a SelectedProperty, or None if no property of obj is selected
 
-    propertyName = propertyName.replace(" ", "")
-    propertyParents_inverse = propertyParents[::-1]
+    def translated(label):  # label as displayed by FreeCAD in the current language
+        return QtGui.QApplication.translate("App::Property", label)
 
-    if len(propertyParents_inverse) > 0:
-        if propertyParents_inverse[0].lstrip() in parentToRemove:  # on retire les blancs car Link en a un
-            del propertyParents_inverse[0]  # remove the top parents if he belong to parentToRemove
+    def displayedName(name):  # 'MapMode' -> 'Map Mode', as FreeCAD displays it
+        return translated(re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", name))
 
-    if not None in propertyParents_inverse:
-        propertyNameCompleteStr = (
-                ".".join(propertyParents_inverse) + "." + propertyName
-        )
-    else:
-        print("None found. Selection not allowed.")
-    if propertyNameCompleteStr.startswith("."):
-        propertyNameCompleteStr = propertyNameCompleteStr[1:]
+    def pathExists(path):
+        try:
+            getPropertyValue(obj, path)
+            return True
+        except Exception:  # on purpose : AttributeError, IndexError, StopIteration...
+            return False
 
-    propertyNameCompleteStr = propertyNameCompleteStr.replace(" ", "")
-    propertyNameCompleteStrDico = dicoName.get(propertyNameCompleteStr, "none")
+    if obj is None:
+        selection = Gui.Selection.getSelection()
+        if len(selection) != 1:
+            return None
+        obj = selection[0]
 
-    if propertyNameCompleteStrDico == "none":
-        propertyNameCompleteStrDico = propertyNameCompleteStr
+    tree = Gui.getMainWindow().findChild(QtGui.QTreeView, "propertyEditorData")
+    if tree is None:
+        return None
+    selected = [i for i in tree.selectedIndexes() if i.column() == 0]
+    index = selected[0] if selected else tree.currentIndex().siblingAtColumn(0)
 
-    return (
-        propertyName,
-        propertyNameCompleteStrDico,
-        propertyParents,
-        propertyTip,
-        propertyValue,
-        propertyExpression,
-        propertyType,
-        objectName,
-        objectType,
-        property_editable,
-        property_enabled,
+    rows = []  # from the top (group) down to the clicked row
+    while index.isValid():
+        rows.insert(0, index)
+        index = index.parent()
+    if len(rows) < 2:  # nothing or a group is selected
+        return None
+    propertyRow, subRows, clicked = rows[1], rows[2:], rows[-1]
+
+    # internal name of the property : in the tooltip ("Type: ...\nName: Placement\n...")
+    match = re.search(r"^Name: (\S+)$", propertyRow.data(QtCore.Qt.ToolTipRole) or "", re.M)
+    name = match.group(1) if match else None
+    if name not in obj.PropertiesList:  # no name in the tooltip (older FreeCAD) : compare displayed names
+        shown = propertyRow.data(QtCore.Qt.DisplayRole) or ""
+        name = next((p for p in obj.PropertiesList
+                     if shown in (p, displayedName(p)) or shown.replace(" ", "") == p), None)
+    if name is None:
+        return None
+    typeId = obj.getTypeIdOfProperty(name)
+
+    # sub-items : English label translated by FreeCAD, else the displayed label
+    path = name
+    subLabels = PROPERTY_SUB_ITEMS.get(typeId.split("::Property")[-1], {})
+    for level, row in enumerate(subRows):
+        shown = row.data(QtCore.Qt.DisplayRole) or ""
+        candidates = [internal for label, internal in subLabels.items()
+                      if level == 0 and shown in (label, translated(label))]
+        candidates += [shown, shown.replace(" ", "")]
+        found = next((c for c in candidates if pathExists(path + "." + c)), None)
+        if found is None:
+            print("Property path not found :", obj.Name + "." + path + " > " + shown)
+            return None
+        path += "." + found
+
+    if not pathExists(path):
+        return None
+    flags = clicked.siblingAtColumn(1).flags()
+    return SelectedProperty(
+        obj=obj,
+        path=path,
+        name=name,
+        typeId=typeId,
+        value=getPropertyValue(obj, path),
+        editable=bool(flags & QtCore.Qt.ItemIsEditable) and bool(flags & QtCore.Qt.ItemIsEnabled),
+        hasSubItems=tree.model().rowCount(clicked) > 0,
     )
-
-
-# ------------------------------------------------
-# get propertyParentObject (pad, sketch...) and propertyName
-# from selectedpropertyInTreeView
-# todo :
-#  - put here code using dico and make othres change to be compatible with
-#    my selectedpropertyInTreeView in my library
-#  - if no property selected, take one by default
-# add
-# ------------------------------------------------
-def propertyParentObjectAndpropertyNameInTreeView():
-    (
-        propertyName,
-        propertyNameCompleteStrDico,
-        propertyParents,
-        propertyTip,
-        propertyValue,
-        propertyExpression,
-        propertyType,
-        objectName,
-        objectType,
-        property_editable,
-        property_enabled,
-    ) = selectedpropertyInTreeView()
-    return (propertyName, propertyNameCompleteStrDico, propertyType, objectName, objectType,
-            property_editable,
-            property_enabled,)
 
 
 #################################################################################
@@ -1822,38 +1869,187 @@ def build_expression(spreadsheetLabel, cellCode, cellAlias, divideBy2):
 
 
 ##########################################
-# Link the property selected in the property view (ex Length of a Pad)
-# to the cell expression.
+# Property mode, step 1 : at the start of the macro, before the spreadsheet is needed,
+# so that an existing link can be removed even when no spreadsheet is open.
+# Checks the property selected in the property view, and if it is already linked,
+# offers to replace the link (only if a spreadsheet is open), to remove it, or to cancel.
 # Parameters :
 # - obj : object owning the property (Pad, Pocket...)
+# - spreadsheetOpen : a spreadsheet is open (its selected cell can be used)
+# return : the SelectedProperty to link, or None if the macro must stop
+#          (property refused, link removed, or cancelled)
+##########################################
+def prepare_property_link(obj, spreadsheetOpen):
+    msg = messages[language]
+    selected = selectedPropertyInPropertyView(obj)
+    if selected is None:
+        showWarning(msg["PropNoneSelected"].format(obj=obj.Label))
+        return None
+    fullPath = obj.Label + "." + selected.path
+    if selected.hasSubItems:
+        showWarning(msg["PropHasSubItems"].format(path=fullPath))
+        return None
+    if not selected.editable:  # greyed / read only, whatever its type
+        showWarning(msg["PropNotEditable"].format(path=fullPath))
+        return None
+
+    oldExpression = propertyExpression(selected)
+    if oldExpression is None:
+        return selected
+    if spreadsheetOpen:
+        action = askLinkAction(msg["PropAlreadyLinked"].format(path=fullPath, old=oldExpression),
+                               allowReplace=True)
+    else:
+        action = askLinkAction(msg["PropAlreadyLinkedNoSheet"].format(path=fullPath, old=oldExpression),
+                               allowReplace=False)
+    if action == "remove":
+        obj.setExpression(selected.path, None)
+        print("Link removed:", fullPath)
+        return None
+    return selected if action == "replace" else None
+
+
+# Expression already set on the selected property, or None
+def propertyExpression(selected):
+    return next((e for p, e in selected.obj.ExpressionEngine if p.lstrip(".") == selected.path), None)
+
+
+##########################################
+# Is the cell value compatible with the property ?
+# Parameters :
+# - selected : SelectedProperty
+# - cellValue : mySpreadsheet.get(cell) : number, Quantity, text, or None (empty cell / error)
+# - cellName : ex 'datas.C2', for the messages
+# return : None if compatible, else the message explaining the refusal
+# Only clear incompatibilities are refused. Other property types (text, links...)
+# are left to FreeCAD, which refuses the expression if needed.
+##########################################
+def cellCompatibilityError(selected, cellValue, cellName):
+    msg = messages[language]
+    path = selected.obj.Label + "." + selected.path
+    value = selected.value
+    cellIsText = isinstance(cellValue, str)
+    cellIsNumber = isinstance(cellValue, (int, float)) or hasattr(cellValue, "Unit")
+
+    def unitType(quantity):  # 'Length', 'Angle'... or '' if no unit
+        unit = getattr(quantity, "Unit", None)
+        if unit is None or unit == App.Units.Unit():
+            return ""
+        return getattr(unit, "Type", "") or str(unit)
+
+    if cellValue is None:
+        return msg["CellEmpty"].format(cell=cellName, path=path)
+
+    # enumeration (ex Type of a Pad) : a text among the choices, or the number of a choice
+    if selected.typeId.startswith("App::PropertyEnumeration"):
+        try:
+            choices = list(selected.obj.getEnumerationsOfProperty(selected.name))
+        except Exception:  # on purpose : old FreeCAD without getEnumerationsOfProperty
+            return None
+        choicesText = "\n".join("  {} : {}".format(i, c) for i, c in enumerate(choices))
+        if cellIsText and cellValue not in choices:
+            return msg["CellEnumText"].format(cell=cellName, value=cellValue, path=path,
+                                              choices=choicesText)
+        if cellIsNumber:
+            number = float(getattr(cellValue, "Value", cellValue))
+            if number != int(number) or not 0 <= number < len(choices):
+                return msg["CellEnumIndex"].format(cell=cellName, value=cellValue, path=path,
+                                                   last=len(choices) - 1, choices=choicesText)
+        return None
+
+    # boolean : 0 (unchecked) or 1 (checked)
+    if selected.typeId.startswith("App::PropertyBool") or isinstance(value, bool):
+        if not cellIsNumber:
+            return msg["CellTextForBool"].format(cell=cellName, value=cellValue, path=path)
+        return None
+
+    # number (Length, x, Angle...) : no text, and the same kind of unit
+    if isinstance(value, (int, float)) or hasattr(value, "Unit"):
+        if not cellIsNumber:
+            return msg["CellTextForNumber"].format(cell=cellName, value=cellValue, path=path)
+        cellUnit, propertyUnit = unitType(cellValue), unitType(value)
+        if cellUnit and propertyUnit and cellUnit != propertyUnit:
+            return msg["CellUnitMismatch"].format(cell=cellName, cellUnit=cellUnit,
+                                                  path=path, propertyUnit=propertyUnit)
+    return None
+
+
+##########################################
+# Property mode, step 2 : link the property to the cell expression.
+# Parameters :
+# - selected : result of prepare_property_link()
 # - cellExpression : ex '<<datas>>.longueur'
-# - propertyInfo : result of propertyParentObjectAndpropertyNameInTreeView(),
-#   read from the property view if not given
+# - cellValue : value of the cell (mySpreadsheet.get()), None if empty or error
+# - cellName : ex 'datas.C2', for the messages
 # return : True if the property has been linked
 ##########################################
-def apply_to_property(obj, cellExpression, propertyInfo=None):
-    if propertyInfo is None:
-        propertyInfo = propertyParentObjectAndpropertyNameInTreeView()
-    (propertyName, propertyPath, propertyType,
-     _objectName, _objectType, propertyEditable, propertyEnabled) = propertyInfo
+def apply_to_property(selected, cellExpression, cellValue, cellName):
+    msg = messages[language]
+    obj = selected.obj
+    fullPath = obj.Label + "." + selected.path
 
-    if propertyPath == "":
-        print("Selection not allowed")
+    error = cellCompatibilityError(selected, cellValue, cellName)
+    if error:
+        showWarning(error)
         return False
-    # Booleans are allowed (cell 0 = unchecked, 1 = checked).
-    # Greyed / read only properties are refused below, whatever their type.
-    if propertyType == "setOf":
-        print(propertyName, ": multi values properties are not editable by the macro.")
-        return False
-    if not (propertyEditable and propertyEnabled):
-        print(propertyName, 'property not editable in this context. Make it editable beforehand.')
-        return False
+
+    # Booleans and enumerations (ex Type of a Pad) : strongly discouraged. Once linked, their
+    # check box or list in the property view has no effect and gives no way to remove the link.
+    # (numeric properties keep an expression editor (f(x)) in which the link can be removed)
+    # No warning if the link is replaced : the user already knows.
+    if (propertyExpression(selected) is None
+            and (selected.typeId.startswith(("App::PropertyBool", "App::PropertyEnumeration"))
+                 or isinstance(selected.value, bool))):
+        unlinkCommand = "App.getDocument('{}').getObject('{}').setExpression('{}', None)".format(
+            obj.Document.Name, obj.Name, selected.path)
+        if not askYesNo(msg["PropBoolEnumWarning"].format(path=fullPath, cmd=unlinkCommand)):
+            return False
+
+    # link, recompute, and offer to go back if FreeCAD detects a new error
+    doc = obj.Document
+    oldExpression = propertyExpression(selected)
+    invalidBefore = {o.Name for o in doc.Objects if not o.isValid()}
+    doc.openTransaction("Link " + fullPath)  # Ctrl+Z also cancels the link
     try:
-        obj.setExpression(propertyPath, cellExpression)
+        obj.setExpression(selected.path, cellExpression)
     except Exception as e:  # on purpose : RuntimeError, ParserError, AttributeError...
-        print("No property selected, or property not editable :", e)
+        doc.abortTransaction()
+        showWarning(msg["PropLinkFailed"].format(path=fullPath, expr=cellExpression, error=e))
         return False
+    doc.recompute()
+    errors = ["{} : {}".format(o.Label, o.getStatusString())
+              for o in doc.Objects if not o.isValid() and o.Name not in invalidBefore]
+    if errors:
+        if oldExpression is not None:
+            previous = oldExpression
+        else:
+            previous = getattr(selected.value, "UserString", selected.value)
+        if askYesNo(msg["PropRecomputeError"].format(path=fullPath, expr=cellExpression,
+                                                     errors="\n".join(errors), old=previous),
+                    defaultYes=True):
+            doc.abortTransaction()
+            restoreProperty(selected, oldExpression)
+            doc.recompute()
+            print("Link cancelled:", fullPath)
+            return False
+    doc.commitTransaction()
+    print("Property linked:", fullPath, "=", cellExpression)
     return True
+
+
+##########################################
+# Put back the expression (or the value if there was no expression) of the property,
+# as it was before the macro linked it.
+# The transaction has already been aborted : this makes sure the property is restored.
+##########################################
+def restoreProperty(selected, oldExpression):
+    try:
+        selected.obj.setExpression(selected.path, oldExpression)  # None removes the expression
+        if oldExpression is None:
+            setPropertyValue(selected.obj, selected.path, selected.value)
+    except Exception as e:  # on purpose : the restore must never crash the macro
+        showWarning(messages[language]["PropRestoreFailed"].format(
+            path=selected.obj.Label + "." + selected.path, error=e))
 
 
 # Dialog boxes used when linking the constraint (replaced by stubs in tests)
@@ -1866,14 +2062,40 @@ def askOkCancel(message):
     ) == QtGui.QMessageBox.Ok
 
 
-def askYesNo(message):  # "No" by default
+def askYesNo(message, defaultYes=False):  # "No" by default
     return QtGui.QMessageBox.question(
         None,
         "",
         message,
         QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
-        QtGui.QMessageBox.No,
+        QtGui.QMessageBox.Yes if defaultYes else QtGui.QMessageBox.No,
     ) == QtGui.QMessageBox.Yes
+
+
+def showWarning(message):
+    QtGui.QMessageBox.warning(Gui.getMainWindow(), messages[language]["Warning"], message)
+
+
+def askLinkAction(message, allowReplace=True):
+    # property already linked : return "replace", "remove" or "cancel" ("cancel" by default)
+    # allowReplace : show the "replace by the selected cell" button
+    box = QtGui.QMessageBox(Gui.getMainWindow())
+    box.setIcon(QtGui.QMessageBox.Question)
+    box.setWindowTitle(messages[language]["Warning"])
+    box.setText(message)
+    replaceButton = None
+    if allowReplace:
+        replaceButton = box.addButton(messages[language]["PropReplaceLink"], QtGui.QMessageBox.AcceptRole)
+    removeButton = box.addButton(messages[language]["PropRemoveLink"], QtGui.QMessageBox.DestructiveRole)
+    cancelButton = box.addButton(messages[language]["Cancel"], QtGui.QMessageBox.RejectRole)
+    box.setDefaultButton(cancelButton)
+    box.exec()
+    clicked = box.clickedButton()
+    if replaceButton is not None and clicked == replaceButton:
+        return "replace"
+    if clicked == removeButton:
+        return "remove"
+    return "cancel"
 
 
 ##########################################
@@ -1960,6 +2182,18 @@ def main():
     indexConstraint = -1
     myConstraint = None
 
+    # Property mode (no sketch in edit mode, an object selected in the tree) :
+    # the property selected in the property view is checked first, so that an
+    # existing link can be removed even when no spreadsheet is open
+    sels = Gui.Selection.getSelectionEx()
+    myPadOrPocket = None  # object owner of the property
+    selectedProperty = None
+    if sels and not isSketchActif():
+        myPadOrPocket = sels[0].Object
+        selectedProperty = prepare_property_link(myPadOrPocket, findSpreadsheetView() is not None)
+        if selectedProperty is None:  # refused, link removed or cancelled
+            return
+
     if addTheObjects():  # Creation of missing objects if wanted
         return
     # Part of setAlias : problem to create alias ?
@@ -1995,16 +2229,11 @@ def main():
         return True
     mySpreadsheet = sheetView.getSheet()
 
-    # Sketch in edit mode, or object (Pad, Pocket...) whose property is selected in the tree
-    # (the selection is not empty here : an empty selection is handled above)
+    # Sketch in edit mode, or object (Pad, Pocket...) whose property is selected
+    # (myPadOrPocket and selectedProperty : found at the start of main)
     # --------------------------------------------------------------
     sels = Gui.Selection.getSelectionEx()
-    if isSketchActif():
-        mySketch = ActiveSketch
-        myPadOrPocket = None
-    else:
-        mySketch = None
-        myPadOrPocket = sels[0].Object  # object owner of property
+    mySketch = ActiveSketch if isSketchActif() else None
 
     # Part SpreadSheet (sheetView / mySpreadsheet : found above)
     # ---------------------------------
@@ -2080,7 +2309,12 @@ def main():
     )
 
     if myPadOrPocket is not None:
-        apply_to_property(myPadOrPocket, cellExpression)
+        try:
+            cellValue = mySpreadsheet.get(cellCode)
+        except Exception:  # on purpose : empty cell or cell error, depending on the FreeCAD version
+            cellValue = None
+        apply_to_property(selectedProperty, cellExpression, cellValue,
+                          mySpreadSheetLabel + "." + cellCode)
         return
 
     nbSelected = len(sels[0].SubElementNames)
