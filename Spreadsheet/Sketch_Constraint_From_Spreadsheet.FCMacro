@@ -53,6 +53,7 @@ import os
 import FreeCAD as App
 import Sketcher
 import re
+import unicodedata
 import itertools
 import locale
 import FreeCADGui as Gui
@@ -1145,6 +1146,10 @@ caracEquivalents = [
     ["@", "a"],
     ["&", "e"],
     ["ç", "c"],
+    ["œ", "oe"],
+    ["Œ", "Oe"],
+    ["æ", "ae"],
+    ["Æ", "Ae"],
     ["²", "2"],
     ["'", ""],
     ["?", ""],
@@ -1186,6 +1191,11 @@ def traitementChaineSource(chaineSource, separateur, nouveauCaract, majuscule):
         for caract in mot:
             a = remplaceCartatParEquivalent(caract)
             motResult = motResult.replace(caract, a)
+        # removes accents not listed above (É, À, ô, ù, ë...)
+        motResult = unicodedata.normalize("NFKD", motResult)
+        motResult = "".join(c for c in motResult if not unicodedata.combining(c))
+        # removes any other character not allowed in an alias
+        motResult = re.sub(r"[^A-Za-z0-9_]", "", motResult)
         return motResult
 
     chaineResult = ""
